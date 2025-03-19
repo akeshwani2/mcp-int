@@ -104,7 +104,7 @@ export function CustomChatUI({
   };
 
   return (
-    <div className="flex flex-col h-full relative overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-2rem)] relative overflow-hidden">
       {/* Header */}
       <div className="border-b border-white/10 p-4 flex justify-between items-center">
         <h2 className="text-lg font-light">{labels.title}</h2>
@@ -139,7 +139,7 @@ export function CustomChatUI({
             <p className="text-gray-400">{labels.initial}</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {visibleMessages.map((message) => {
               // Cast message to ChatMessage type to fix TypeScript errors
               const msg = message as ChatMessage;
@@ -151,7 +151,7 @@ export function CustomChatUI({
                   }`}
                 >
                   <div
-                    className={`max-w-[85%] rounded-lg p-3 ${
+                    className={`max-w-[85%] rounded-lg p-4 ${
                       msg.role === Role.User
                         ? "bg-white text-black"
                         : "bg-black text-white border border-white/10"
@@ -164,7 +164,7 @@ export function CustomChatUI({
             })}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="max-w-[85%] rounded-lg p-3 bg-black text-white border border-white/10">
+                <div className="max-w-[85%] rounded-lg p-4 bg-black text-white border border-white/10">
                   <div className="flex space-x-2">
                     <div className="w-2 h-2 rounded-full bg-white/50 animate-pulse"></div>
                     <div className="w-2 h-2 rounded-full bg-white/50 animate-pulse" style={{ animationDelay: "0.2s" }}></div>

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useCoAgent } from "@copilotkit/react-core";
-import { ExampleConfigs } from "./ExampleConfigs";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 
 type ConnectionType = "stdio" | "sse";
@@ -154,21 +153,26 @@ export function MCPConfigForm() {
   }
 
   return (
-    <div className="w-full h-screen flex flex-col px-2 py-2 overflow-hidden">
+    <div className="w-full h-screen flex flex-col px-4 py-4 overflow-hidden bg-black text-white">
       {/* Header */}
-      <div className="py-2 flex flex-col mb-4 sm:flex-row justify-between items-start sm:items-center">
+      <div className="py-2 flex flex-row mb-6 justify-between items-center border-b border-white/20 pb-4">
         <div className="flex items-center">
-          <h1 className="text-3xl sm:text-5xl tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-light tracking-tight">
             Echo
+            <span>
+            <div className="text-xs text-gray-400 mt-2 uppercase tracking-wider font-medium">
+              Active Servers: {totalServers}
+            </div>
+            </span>
           </h1>
         </div>
         <button
           onClick={() => setShowAddServerForm(true)}
-          className="mt-3 sm:mt-0 px-4 py-2 bg-gray-800 text-white rounded-md text-sm font-medium hover:bg-gray-700 flex items-center gap-1 justify-center"
+          className="px-3 py-1.5 bg-gray-900 text-white cursor-pointer rounded-md text-xs font-medium hover:bg-gray-800 flex items-center gap-1 justify-center border border-gray-700 transition-colors"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
+            className="h-3.5 w-3.5"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -176,33 +180,17 @@ export function MCPConfigForm() {
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2}
+              strokeWidth={1.5}
               d="M12 4v16m8-8H4"
             />
           </svg>
-          Add Server
+          <span className="ml-1">Add Server</span>
         </button>
       </div>
 
-      {/* Server Statistics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
-        <div className="bg-white border rounded-md p-2 sm:p-3">
-          <div className="text-sm text-gray-500">Active MCP Servers</div>
-          <div className="text-3xl font-bold">{totalServers}</div>
-        </div>
-        <div className="bg-white border rounded-md p-2 sm:p-3">
-          <div className="text-sm text-gray-500">Stdio Servers</div>
-          <div className="text-3xl font-bold">{stdioServers}</div>
-        </div>
-        <div className="bg-white border rounded-md p-2 sm:p-3">
-          <div className="text-sm text-gray-500">SSE Servers</div>
-          <div className="text-3xl font-bold">{sseServers}</div>
-        </div>
-      </div>
-
       {/* Server List */}
-      <div className="bg-white border rounded-md p-3 w-full flex-grow overflow-auto">
-        <h2 className="text-lg font-semibold mb-4">Server List</h2>
+      <div className="bg-white border rounded-md p-3 w-full">
+        <h2 className="text-lg font-semibold mb-4">Your Servers</h2>
 
         {totalServers === 0 ? (
           <div className="text-gray-500 text-center py-8 h-full flex items-center justify-center">
@@ -221,7 +209,8 @@ export function MCPConfigForm() {
                   d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"
                 />
               </svg>
-              No servers configured. Click &quot;Add Server&quot; to get started.
+              No servers configured. Click &quot;Add Server&quot; to get
+              started.
             </div>
           </div>
         ) : (
@@ -309,7 +298,7 @@ export function MCPConfigForm() {
         )}
 
         {/* Composio & mcp.run reference */}
-        <div className="mt-4 pt-3 border-t text-center text-sm text-gray-500">
+        {/* <div className="mt-4 pt-3 border-t text-center text-sm text-gray-500">
           More MCP servers available on the web, e.g.{" "}
           <a
             href="https://mcp.composio.dev/"
@@ -330,7 +319,7 @@ export function MCPConfigForm() {
             mcp.run
             <ExternalLink />
           </a>
-        </div>
+        </div> */}
       </div>
 
       {/* Add Server Modal */}
