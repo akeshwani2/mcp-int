@@ -26,7 +26,7 @@ export default function Home() {
           <MCPConfigForm />
         ) : (
           <div className="w-full max-w-md text-center mb-12">
-            <h1 className="text-3xl font-light mb-6">MCP Assistant</h1>
+            <h1 className="text-3xl font-light mb-6">Echo</h1>
             <p className="text-gray-400 mb-8 text-sm">
               Professional AI assistance for your MCP servers
             </p>
@@ -116,11 +116,11 @@ export default function Home() {
         }`}
       >
         <CustomChatUI 
-          instructions="You are a professional assistant providing expert guidance on MCP server configuration and management. Be concise and helpful."
+          instructions="You are a professional assistant named Echo, providing expert guidance on MCP server configuration and management. Be concise and helpful."
           labels={{
-            title: "MCP Assistant",
+            title: "Echo",
             initial: "Need any help?",
-            placeholder: "Ask a question...",
+            placeholder: "Ask Echo a question...",
           }}
         />
       </div>
