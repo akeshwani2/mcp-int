@@ -127,3 +127,113 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Black background with white text theme */
+body {
+  background-color: #000 !important;
+  color: #fff !important;
+}
+
+html {
+  background-color: #000;
+}
+
+/* Make all cards and panels dark */
+.bg-white, 
+.bg-gray-50, 
+.bg-gray-100 {
+  background-color: #111 !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Fix text colors */
+.text-gray-500,
+.text-gray-600,
+.text-gray-700,
+.text-gray-800,
+.text-gray-900 {
+  color: #bbb !important;
+}
+
+/* Make borders subtle */
+.border {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Style buttons */
+button {
+  background-color: #111 !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+button:hover {
+  background-color: #222 !important;
+}
+
+/* Style links */
+a {
+  color: #bbb !important;
+}
+
+a:hover {
+  color: #fff !important;
+}
+
+/* Style inputs */
+input, textarea, select {
+  background-color: #111 !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Style the chat components */
+.copilotkit-chat-window {
+  background-color: #000 !important;
+  color: #fff !important;
+}
+
+.copilotkit-chat-bubble-user {
+  background-color: #333 !important;
+  color: #fff !important;
+}
+
+.copilotkit-chat-bubble-ai {
+  background-color: #111 !important;
+  color: #fff !important;
+}
+
+.copilotkit-chat-input-container {
+  background-color: #111 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.copilotkit-chat-input-textarea {
+  color: #fff !important;
+}
+
+/* Apply dark mode to modal */
+.modal-content {
+  background-color: #111 !important;
+  color: #fff !important;
+}
+
+
+.chat-container {
+  background-color: black !important;
+}
+
+.chat-container > * {
+  background-color: black !important;
+}
+/* Add this to your global CSS or component styles */
+.copilot-chat-container .user-message {
+  background-color: white !important;
+  color: black !important;
+}
+
+.copilot-chat-container .assistant-message {
+  background-color: black !important;
+  color: white !important;
+}

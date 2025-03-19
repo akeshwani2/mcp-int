@@ -16,6 +16,7 @@ const eslintConfig = [
       "app/components/CopilotActionHandler.tsx",
       "app/components/ExampleConfigs.tsx",
       "app/components/ToolCallRenderer.tsx",
+      "app/components/CustomChatUI.tsx",
     ],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
