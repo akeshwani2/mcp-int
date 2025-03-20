@@ -212,7 +212,7 @@ export function MCPConfigForm() {
                   {config.transport === "stdio" ? (
                     <p className="font-mono">{config.command}</p>
                   ) : (
-                    <p className="font-mono truncate">{config.url}</p>
+                    <p className="font-mono truncate max-w-[250px]" title={config.url}>{config.url}</p>
                   )}
                 </div>
               </div>
