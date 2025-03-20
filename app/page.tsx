@@ -25,16 +25,10 @@ export default function Home() {
   }, []);
 
   const handleNavigation = (page: string) => {
-    if (page === "chat") {
+    if (page === "home") {
       setIsChatOpen(true);
-    } else if (page === "settings") {
-      setIsConfigVisible(true);
-      setCurrentPage("settings");
-    } else if (page === "home") {
-      setCurrentPage("home");
-      setIsConfigVisible(false);
-    } else if (page === "info") {
-      setCurrentPage("info");
+    } else if (page === "docs") {
+      setCurrentPage("docs");
       setIsConfigVisible(false);
     }
   };
