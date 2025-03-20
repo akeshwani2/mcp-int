@@ -157,7 +157,7 @@ export function MCPConfigForm() {
       {/* Header */}
       <div className="py-2 flex flex-row mb-6 justify-between items-center border-b border-white/20 pb-4">
         <div className="flex items-center">
-          <h1 className="text-2xl sm:text-3xl font-light tracking-tight">
+          <h1 className="text-2xl sm:text-2xl font-light tracking-tight">
             Echo
             <span>
             <div className="text-xs text-gray-400 mt-2 uppercase tracking-wider font-medium">
@@ -190,31 +190,16 @@ export function MCPConfigForm() {
 
       {/* Server List */}
       <div className="bg-white border rounded-md p-3 w-full">
-        <h2 className="text-lg font-semibold mb-4">Your Servers</h2>
+        <h2 className="text-lg tracking-tight mb-4">Your Servers</h2>
 
         {totalServers === 0 ? (
-          <div className="text-gray-500 text-center py-8 h-full flex items-center justify-center">
+          <div className="text-gray-500 text-center tracking-tight py-8 h-full flex items-center justify-center">
             <div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-12 w-12 mx-auto text-gray-300 mb-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"
-                />
-              </svg>
-              No servers configured. Click &quot;Add Server&quot; to get
-              started.
+              No servers configured yet.
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-2">
             {Object.entries(configs).map(([name, config]) => (
               <div
                 key={name}
@@ -224,7 +209,8 @@ export function MCPConfigForm() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-medium text-sm">{name}</h3>
-                      <div className="inline-flex items-center px-1.5 py-0.5 bg-gray-100 text-xs rounded mt-1">
+                      <p className="text-xs text-gray-500 mt-1.5">Type: <span className="uppercase">{config.transport}</span></p>
+                      {/* <div className="inline-flex items-center py-0.5 bg-gray-100 text-xs rounded mt-1">
                         {config.transport === "stdio" ? (
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -257,18 +243,18 @@ export function MCPConfigForm() {
                           </svg>
                         )}
                         {config.transport}
-                      </div>
+                      </div> */}
                     </div>
                     <button
                       onClick={() => removeConfig(name)}
-                      className="text-gray-400 hover:text-red-500"
+                      className="cursor-pointer hover:scale-105 transition-all duration-300"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         className="w-4 h-4"
                         fill="none"
                         viewBox="0 0 24 24"
-                        stroke="currentColor"
+                        stroke="red"
                       >
                         <path
                           strokeLinecap="round"
@@ -379,7 +365,7 @@ export function MCPConfigForm() {
                 />
               </div>
 
-              <div>
+<div>
                 <label className="block text-sm font-medium mb-1">
                   Connection Type
                 </label>
@@ -436,6 +422,8 @@ export function MCPConfigForm() {
                   </button>
                 </div>
               </div>
+
+
 
               {connectionType === "stdio" ? (
                 <>

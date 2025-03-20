@@ -3,7 +3,7 @@
 import { useCopilotChat, UseCopilotChatOptions } from "@copilotkit/react-core";
 import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
 import { useState, useRef, useEffect } from "react";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, StopCircle } from "lucide-react";
 import { Markdown } from "@copilotkit/react-ui";
 import { ToolCallRenderer } from "./ToolCallRenderer";
 
@@ -20,13 +20,13 @@ interface CustomChatUIProps {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ChatMessage = any;
 
-export function CustomChatUI({ 
+export function CustomChatUI({
   instructions,
   labels = {
-    title: "MCP Assistant",
+    title: "Echo",
     initial: "Need any help?",
     placeholder: "Ask a question...",
-  }
+  },
 }: CustomChatUIProps) {
   const {
     visibleMessages,
@@ -37,7 +37,7 @@ export function CustomChatUI({
     stopGeneration,
     isLoading,
   } = useCopilotChat({
-    systemPrompt: instructions
+    systemPrompt: instructions,
   } as UseCopilotChatOptions);
 
   const [inputValue, setInputValue] = useState("");
@@ -46,7 +46,9 @@ export function CustomChatUI({
 
   const sendMessage = () => {
     if (inputValue.trim() && !isLoading) {
-      appendMessage(new TextMessage({ content: inputValue.trim(), role: Role.User }));
+      appendMessage(
+        new TextMessage({ content: inputValue.trim(), role: Role.User })
+      );
       setInputValue("");
     }
   };
@@ -61,7 +63,7 @@ export function CustomChatUI({
   // Handle auto-resizing of the textarea
   const autoResizeTextarea = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target;
-    textarea.style.height = 'auto';
+    textarea.style.height = "auto";
     const newHeight = Math.min(Math.max(textarea.scrollHeight, 48), 96);
     textarea.style.height = `${newHeight}px`;
     setInputValue(textarea.value);
@@ -82,11 +84,9 @@ export function CustomChatUI({
   const renderMessage = (message: ChatMessage) => {
     // Check if message is a user message
     if (message.role === Role.User) {
-      return (
-        <div className="whitespace-pre-wrap">{message.content}</div>
-      );
-    } 
-    
+      return <div className="whitespace-pre-wrap">{message.content}</div>;
+    }
+
     // Check if message has tool call properties
     if (message.name && message.args && message.status) {
       return (
@@ -98,20 +98,20 @@ export function CustomChatUI({
         />
       );
     }
-    
+
     // Default for assistant text messages
     return <Markdown content={message.content} />;
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-2rem)] relative overflow-hidden">
+    <div className="flex flex-col h-full relative overflow-hidden">
       {/* Header */}
-      <div className="border-b border-white/10 p-4 flex justify-between items-center">
+      <div className="flex justify-between items-center py-2">
         <h2 className="text-lg font-light">{labels.title}</h2>
         <div className="flex space-x-2">
-          <button
+          {/* <button
             onClick={reloadMessages}
-            className="p-2 rounded-full hover:bg-white/10 transition-colors"
+            className="p-2 rounded-full cursor-pointer hover:scale-105 hover:bg-white/10 transition-all duration-300"
             aria-label="Reload conversation"
           >
             <svg
@@ -128,18 +128,18 @@ export function CustomChatUI({
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-          </button>
+          </button> */}
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 pb-20">
+      {/* Messages - Only this section should scroll */}
+      <div className="flex-1 overflow-y-auto p-4 overflow-x-hidden">
         {visibleMessages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-400">{labels.initial}</p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-6 w-full">
             {visibleMessages.map((message) => {
               // Cast message to ChatMessage type to fix TypeScript errors
               const msg = message as ChatMessage;
@@ -151,7 +151,7 @@ export function CustomChatUI({
                   }`}
                 >
                   <div
-                    className={`max-w-[85%] rounded-lg p-4 ${
+                    className={`max-w-[80%] rounded-lg p-4 ${
                       msg.role === Role.User
                         ? "bg-white text-black"
                         : "bg-black text-white border border-white/10"
@@ -164,11 +164,17 @@ export function CustomChatUI({
             })}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="max-w-[85%] rounded-lg p-4 bg-black text-white border border-white/10">
+                <div className="max-w-[80%] rounded-lg p-4 bg-black text-white border border-white/10">
                   <div className="flex space-x-2">
                     <div className="w-2 h-2 rounded-full bg-white/50 animate-pulse"></div>
-                    <div className="w-2 h-2 rounded-full bg-white/50 animate-pulse" style={{ animationDelay: "0.2s" }}></div>
-                    <div className="w-2 h-2 rounded-full bg-white/50 animate-pulse" style={{ animationDelay: "0.4s" }}></div>
+                    <div
+                      className="w-2 h-2 rounded-full bg-white/50 animate-pulse"
+                      style={{ animationDelay: "0.2s" }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 rounded-full bg-white/50 animate-pulse"
+                      style={{ animationDelay: "0.4s" }}
+                    ></div>
                   </div>
                 </div>
               </div>
@@ -179,44 +185,52 @@ export function CustomChatUI({
       </div>
 
       {/* Input */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-black border-t border-white/10">
-        <div className="relative">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          sendMessage();
+        }}
+        className="px-4 shrink-0 bg-black"
+      >
+        <div className="flex space-x-2 justify-between items-center">
           <textarea
             ref={inputRef}
             value={inputValue}
             onChange={autoResizeTextarea}
             onKeyDown={handleKeyDown}
             placeholder={labels.placeholder}
-            className="w-full bg-black border border-white/20 rounded-lg py-3 pl-4 pr-12 resize-none text-white focus:outline-none focus:ring-1 focus:ring-white/30"
-            rows={1}
-            style={{ 
-              minHeight: "48px",
-              maxHeight: "96px"
+            className="flex-1 bg-black text-white rounded-lg px-4 py-2 ring-1 ring-white/20 focus:ring-white/30 transition-all focus:outline-none resize-none"
+            style={{
+              height: "41.5px",
+              minHeight: "41.5px",
+              maxHeight: "41.5px",
             }}
+            disabled={isLoading}
           />
-          <button
-            onClick={sendMessage}
-            disabled={!inputValue.trim() || isLoading}
-            className={`absolute right-2 bottom-2 p-2 rounded-full ${
-              !inputValue.trim() || isLoading
-                ? "text-white/30"
-                : "text-white hover:bg-white/10"
-            } transition-colors`}
-          >
-            <ArrowUp className="h-5 w-5" />
-          </button>
-        </div>
-        {isLoading && (
-          <div className="mt-2 flex justify-end">
-            <button
-              onClick={stopGeneration}
-              className="text-xs text-white/50 hover:text-white/80 transition-colors"
-            >
-              Stop generating
-            </button>
+          <div className=" flex justify-end">
+            {isLoading ? (
+              <button
+                onClick={stopGeneration}
+                className="!bg-white !text-black px-4 py-3 rounded-lg hover:scale-105 transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{ backgroundColor: "white", color: "black" }}
+              >
+                <StopCircle className="h-5 w-5 text-black" />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                className="!bg-white !text-black px-4 py-3 rounded-lg cursor-pointer hover:scale-105 transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed disabled:scale-100"
+                style={{ backgroundColor: "white", color: "black" }}
+                disabled={!inputValue.trim() || isLoading}
+              >
+                <ArrowUp className="h-5 w-5 text-black" />
+              </button>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      </form>
     </div>
   );
-} 
+}
+
+export default CustomChatUI;
