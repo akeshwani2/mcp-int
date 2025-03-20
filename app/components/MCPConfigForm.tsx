@@ -150,7 +150,7 @@ export function MCPConfigForm() {
   };
 
   if (isLoading) {
-    return <div className="p-4">Loading configuration...</div>;
+    return <div className="p-4 animate-pulse">Loading configurations</div>;
   }
 
   return (

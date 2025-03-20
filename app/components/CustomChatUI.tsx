@@ -165,16 +165,19 @@ export function CustomChatUI({
             {isLoading && (
               <div className="flex justify-start">
                 <div className="max-w-[80%] rounded-lg p-4 bg-black text-white border border-white/10">
-                  <div className="flex space-x-2">
-                    <div className="w-2 h-2 rounded-full bg-white/50 animate-pulse"></div>
-                    <div
-                      className="w-2 h-2 rounded-full bg-white/50 animate-pulse"
-                      style={{ animationDelay: "0.2s" }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 rounded-full bg-white/50 animate-pulse"
-                      style={{ animationDelay: "0.4s" }}
-                    ></div>
+                  <div className="flex items-center space-x-3">
+                    {/* <span className="text-sm text-white/70">Thinking...</span> */}
+                    <div className="flex space-x-2">
+                      <div className="w-2 h-2 rounded-full bg-white/50 animate-pulse"></div>
+                      <div
+                        className="w-2 h-2 rounded-full bg-white/50 animate-pulse"
+                        style={{ animationDelay: "0.2s" }}
+                      ></div>
+                      <div
+                        className="w-2 h-2 rounded-full bg-white/50 animate-pulse"
+                        style={{ animationDelay: "0.4s" }}
+                      ></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -211,7 +214,7 @@ export function CustomChatUI({
             {isLoading ? (
               <button
                 onClick={stopGeneration}
-                className="!bg-white !text-black px-4 py-3 rounded-lg hover:scale-105 transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="!bg-white !text-black px-4 py-3 rounded-lg cursor-pointer hover:scale-105 transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
                 style={{ backgroundColor: "white", color: "black" }}
               >
                 <StopCircle className="h-5 w-5 text-black" />

@@ -15,7 +15,7 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
   status,
   result,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
