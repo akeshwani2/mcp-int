@@ -49,7 +49,7 @@ export default function Home() {
             instructions="You are a professional assistant named Echo, providing expert guidance on MCP server configuration and management. Be concise and helpful."
             labels={{
               title: "",
-              initial: "How can I help you?",
+              initial: "How can I help you today?",
               placeholder: "Ask Echo a question...",
             }}
           />
