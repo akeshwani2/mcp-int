@@ -54,18 +54,20 @@ export function CustomChatUI({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    // Prevent new lines - catch all enter key combinations
+    if (e.key === "Enter") {
       e.preventDefault();
-      sendMessage();
+      // Only send message if not shift+enter
+      if (!e.shiftKey) {
+        sendMessage();
+      }
     }
   };
 
   // Handle auto-resizing of the textarea
   const autoResizeTextarea = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target;
-    textarea.style.height = "auto";
-    const newHeight = Math.min(Math.max(textarea.scrollHeight, 48), 96);
-    textarea.style.height = `${newHeight}px`;
+    // No need to resize height since we're using horizontal scrolling
     setInputValue(textarea.value);
   };
 
@@ -201,12 +203,28 @@ export function CustomChatUI({
             value={inputValue}
             onChange={autoResizeTextarea}
             onKeyDown={handleKeyDown}
+            onPaste={(e) => {
+              e.preventDefault();
+              const text = e.clipboardData.getData('text/plain');
+              // Replace all newlines with spaces to keep it a single line
+              const sanitizedText = text.replace(/[\r\n]+/g, ' ');
+              // Update the input value with the sanitized text
+              const newValue = inputValue.substring(0, e.currentTarget.selectionStart) + 
+                              sanitizedText + 
+                              inputValue.substring(e.currentTarget.selectionEnd);
+              setInputValue(newValue);
+            }}
             placeholder={labels.placeholder}
-            className="flex-1 bg-black text-white rounded-lg px-4 py-2 ring-1 ring-white/20 focus:ring-white/30 transition-all focus:outline-none resize-none"
+            className="flex-1 bg-black text-white rounded-lg px-4 py-2 ring-1 ring-white/20 focus:ring-white/30 transition-all focus:outline-none resize-none overflow-x-auto [&::-webkit-scrollbar]:hidden"
             style={{
               height: "41.5px",
               minHeight: "41.5px",
               maxHeight: "41.5px",
+              whiteSpace: "nowrap",
+              overflowY: "hidden",
+              overflowX: "auto",
+              scrollbarWidth: "none", /* Firefox */
+              msOverflowStyle: "none", /* IE and Edge */
             }}
             disabled={isLoading}
           />
