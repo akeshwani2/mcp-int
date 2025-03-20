@@ -1,13 +1,12 @@
 "use client";
 
 import React from 'react';
-import { Star } from 'lucide-react';
 import { MCPCard } from './MCPCard';
 import { POPULAR_MCPS } from './mcp-data';
 
 export const PopularMCPs = () => {
   return (
-    <div className="bg-black rounded-sm p-1">
+    <div id="popular-section" className="bg-black rounded-sm p-1">
       <div className="flex items-center mb-1 gap-2">
         <h2 className="text-sm font-medium tracking-tight text-white">Popular</h2>
       </div>

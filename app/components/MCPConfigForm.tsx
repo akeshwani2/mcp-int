@@ -171,7 +171,7 @@ export function MCPConfigForm() {
 
       {totalServers === 0 ? (
         <div className="flex flex-col items-center justify-center h-40 text-zinc-600 border border-zinc-800 rounded-md bg-zinc-900/30">
-          <p className="text-sm mb-3">No servers configured</p>
+          <p className="text-sm mb-3">Visit the <a href="/marketplace" className="text-zinc-400 hover:text-zinc-300">marketplace</a> to find a server to connect to!</p>
           <button
             onClick={() => setShowAddServerForm(true)}
             className="px-3 hover:scale-105 transition-all duration-300 cursor-pointer py-1.5 bg-zinc-800 text-zinc-400 rounded border border-zinc-700 hover:bg-zinc-700 transition-colors flex items-center gap-1.5 text-xs"

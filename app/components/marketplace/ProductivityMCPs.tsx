@@ -7,7 +7,7 @@ import { PRODUCTIVITY_MCPS } from './mcp-data';
 
 export const ProductivityMCPs = () => {
   return (
-    <div className="bg-black rounded-sm p-1">
+    <div id="productivity-section" className="bg-black rounded-sm p-1">
       <div className="flex items-center mb-1 gap-2">
         <h2 className="text-sm font-medium tracking-tight text-white">Productivity</h2>
       </div>

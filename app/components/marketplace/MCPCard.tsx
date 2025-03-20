@@ -22,7 +22,7 @@ export const MCPCard: React.FC<MCPProps> = ({
   
   return (
     <div 
-      className="relative bg-black border border-gray-800 rounded-sm overflow-visible hover:border-gray-700 transition-all duration-200"
+      className={`relative bg-black border border-gray-800 rounded-sm overflow-visible hover:border-gray-700 transition-all duration-200 hover:scale-105 ${isHovered ? 'z-40' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -34,7 +34,7 @@ export const MCPCard: React.FC<MCPProps> = ({
                 <img
                   src={icon}
                   alt={`${name} icon`}
-                  className="rounded-sm object-contain w-full h-full"
+                  className="rounded-sm object-contain w-full h-full p-0.5 border border-gray-700 bg-white/5 shadow-[0_0_5px_rgba(255,255,255,0.1)]"
                 />
               </div>
               <h3 className="text-sm font-medium tracking-tight text-white">{name}</h3>
@@ -46,14 +46,12 @@ export const MCPCard: React.FC<MCPProps> = ({
           </div>
           
           <p className="text-xs text-gray-400 mb-3 line-clamp-2 tracking-tight">{description}</p>
-          
-          
         </div>
       </Link>
       
       {/* Dropdown card with improved transitions */}
       <div 
-        className={`absolute z-20 top-full left-0 w-72 mt-2 bg-gray-800 border border-gray-700 rounded-sm shadow-lg 
+        className={`absolute z-50 top-full left-0  mt-2 bg-white border border-gray-700 rounded-sm shadow-lg 
                    transition-all duration-300 ease-in-out transform origin-top
                    ${isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
       >
@@ -63,7 +61,7 @@ export const MCPCard: React.FC<MCPProps> = ({
               <img
                 src={icon}
                 alt={`${name} icon`}
-                className="rounded-sm object-contain w-full h-full"
+                className="rounded-sm object-contain w-full h-full border border-gray-700 bg-white/5 shadow-[0_0_5px_rgba(255,255,255,0.1)] p-0.5"
               />
             </div>
             <div>
@@ -74,7 +72,6 @@ export const MCPCard: React.FC<MCPProps> = ({
           <p className="text-xs text-gray-400 mb-4">{description}</p>
           
           <div className="flex justify-between items-center">
-            <span className="text-xs text-gray-500">Click card to visit</span>
             <Link 
               href={link}
               target="_blank" 
@@ -82,11 +79,11 @@ export const MCPCard: React.FC<MCPProps> = ({
               className="inline-flex items-center gap-1 text-xs text-white bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded-sm transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
-              Visit website <ExternalLink size={12} />
+              Get MCP Server <ExternalLink size={12} />
             </Link>
           </div>
         </div>
       </div>
     </div>
   );
-}; 
+};
