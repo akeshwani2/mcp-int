@@ -138,7 +138,7 @@ export function CustomChatUI({
       <div className="flex-1 overflow-y-auto p-4 overflow-x-hidden">
         {visibleMessages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-gray-400">{labels.initial}</p>
+            <p className="text-white text-2xl tracking-tight border border-gray-900 px-6 py-4 rounded-full">{labels.initial}</p>
           </div>
         ) : (
           <div className="space-y-6 w-full">

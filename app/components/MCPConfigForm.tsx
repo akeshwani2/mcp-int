@@ -176,7 +176,7 @@ export function MCPConfigForm() {
             onClick={() => setShowAddServerForm(true)}
             className="px-3 hover:scale-105 transition-all duration-300 cursor-pointer py-1.5 bg-zinc-800 text-zinc-400 rounded border border-zinc-700 hover:bg-zinc-700 transition-colors flex items-center gap-1.5 text-xs"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <CirclePlus className="h-3.5 w-3.5" />
             Add your first server
           </button>
         </div>
