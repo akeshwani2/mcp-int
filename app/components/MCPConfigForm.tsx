@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useCoAgent } from "@copilotkit/react-core";
 import { useLocalStorage } from "../hooks/useLocalStorage";
+import { CirclePlus, TerminalSquare } from "lucide-react";
 
 type ConnectionType = "stdio" | "sse";
 
@@ -155,14 +156,14 @@ export function MCPConfigForm() {
   return (
     <div className="w-full h-screen flex flex-col px-4 py-4 overflow-hidden bg-black text-white">
       {/* Header */}
-      <div className="py-2 flex flex-row mb-6 justify-between items-center border-b border-white/20 pb-4">
+      <div className="py-2 flex flex-row mb-6 justify-between items-center border-b border-white/10 pb-4">
         <div className="flex items-center">
           <h1 className="text-2xl sm:text-2xl font-light tracking-tight">
             Echo
             <span>
-            <div className="text-xs text-gray-400 mt-2 uppercase tracking-wider font-medium">
-              Active Servers: {totalServers}
-            </div>
+              <div className="text-xs text-gray-400 mt-2 uppercase tracking-wider font-medium">
+                Active Servers: {totalServers}
+              </div>
             </span>
           </h1>
         </div>
@@ -170,46 +171,34 @@ export function MCPConfigForm() {
           onClick={() => setShowAddServerForm(true)}
           className="px-3 py-1.5 bg-gray-900 text-white cursor-pointer rounded-md text-xs font-medium hover:bg-gray-800 flex items-center gap-1 justify-center border border-gray-700 transition-colors"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-3.5 w-3.5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
+          <CirclePlus className="h-3.5 w-3.5" />
           <span className="ml-1">Add Server</span>
         </button>
       </div>
 
       {/* Server List */}
       <div className="bg-white border rounded-md p-3 w-full">
-        <h2 className="text-lg tracking-tight mb-4">Your Servers</h2>
+        <h2 className="text-lg tracking-tight">Your Servers</h2>
 
         {totalServers === 0 ? (
-          <div className="text-gray-500 text-center tracking-tight py-8 h-full flex items-center justify-center">
-            <div>
-              No servers configured yet.
-            </div>
+          <div className="text-gray-500 text-xs text-center tracking-tight flex">
+            No servers configured yet
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-2">
             {Object.entries(configs).map(([name, config]) => (
               <div
                 key={name}
-                className="border rounded-md overflow-hidden bg-white shadow-sm hover:shadow transition-shadow"
+                className="border mt-4 rounded-md overflow-hidden bg-white shadow-sm hover:shadow transition-shadow"
               >
                 <div className="p-2">
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-medium text-sm">{name}</h3>
-                      <p className="text-xs text-gray-500 mt-1.5">Type: <span className="uppercase">{config.transport}</span></p>
+                      <p className="text-xs text-gray-500 mt-1.5">
+                        Type:{" "}
+                        <span className="uppercase">{config.transport}</span>
+                      </p>
                       {/* <div className="inline-flex items-center py-0.5 bg-gray-100 text-xs rounded mt-1">
                         {config.transport === "stdio" ? (
                           <svg
@@ -310,29 +299,15 @@ export function MCPConfigForm() {
 
       {/* Add Server Modal */}
       {showAddServerForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 tracking-tight bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold flex items-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Add New Server
+              <h2 className="text-lg flex items-center">
+                Add Server
               </h2>
               <button
                 onClick={() => setShowAddServerForm(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 cursor-pointer"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -361,46 +336,33 @@ export function MCPConfigForm() {
                   value={serverName}
                   onChange={(e) => setServerName(e.target.value)}
                   className="w-full px-3 py-2 border rounded-md text-sm"
-                  placeholder="e.g., api-service, data-processor"
+                  placeholder="e.g., gmail-service, cal-bot"
                 />
               </div>
 
-<div>
+              <div>
                 <label className="block text-sm font-medium mb-1">
-                  Connection Type
+                  Server Type
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setConnectionType("stdio")}
-                    className={`px-3 py-2 border rounded-md text-center flex items-center justify-center ${
+                    className={`px-3 py-2 cursor-pointer border rounded-md text-center flex items-center justify-center ${
                       connectionType === "stdio"
-                        ? "bg-gray-200 border-gray-400 text-gray-800"
+                        ? "bg-white border-gray-400 text-gray-800"
                         : "bg-white text-gray-700"
                     }`}
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-4 h-4 mr-1"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                    Standard IO
+                    <TerminalSquare className="w-4 h-4 mr-1" />
+                    Standard
                   </button>
                   <button
                     type="button"
                     onClick={() => setConnectionType("sse")}
-                    className={`px-3 py-2 border rounded-md text-center flex items-center justify-center ${
+                    className={`px-3 py-2 cursor-pointer border rounded-md text-center flex items-center justify-center ${
                       connectionType === "sse"
-                        ? "bg-gray-200 border-gray-400 text-gray-800"
+                        ? "bg-white border-gray-400 text-gray-800"
                         : "bg-white text-gray-700"
                     }`}
                   >
@@ -422,8 +384,6 @@ export function MCPConfigForm() {
                   </button>
                 </div>
               </div>
-
-
 
               {connectionType === "stdio" ? (
                 <>
@@ -468,7 +428,7 @@ export function MCPConfigForm() {
               <div className="flex justify-end space-x-2 pt-2">
                 <button
                   onClick={() => setShowAddServerForm(false)}
-                  className="px-4 py-2 border text-gray-700 rounded-md hover:bg-gray-50 text-sm font-medium flex items-center"
+                  className="px-4 py-2 border cursor-pointer hover:scale-105 transition-all duration-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm font-medium flex items-center"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -488,7 +448,7 @@ export function MCPConfigForm() {
                 </button>
                 <button
                   onClick={addConfig}
-                  className="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 text-sm font-medium flex items-center"
+                  className="px-4 py-2 border cursor-pointer hover:scale-105 transition-all duration-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm font-medium flex items-center"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
