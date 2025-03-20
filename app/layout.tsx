@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MCP Assistant",
+  title: "Echo",
   description: "Professional AI assistance for your MCP servers",
 };
 
