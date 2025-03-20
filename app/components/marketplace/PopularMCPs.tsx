@@ -9,7 +9,6 @@ export const PopularMCPs = () => {
   return (
     <div className="bg-black rounded-sm p-1">
       <div className="flex items-center mb-1 gap-2">
-        <Star className="text-white" size={16} />
         <h2 className="text-sm font-medium tracking-tight text-white">Popular</h2>
       </div>
       <p className="text-xs text-gray-400 mb-5 tracking-tight">Most used tools and integrations</p>
