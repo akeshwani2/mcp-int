@@ -121,61 +121,71 @@ export function CustomChatUI({
       return <div className="whitespace-pre-wrap">{message.content}</div>;
     }
 
-    // Check ActionExecutionMessage type
-    if (message.__typename === "ActionExecutionMessage" || 
-        (typeof message.id === 'string' && message.id.includes('call_'))) {
-      return (
-        <ToolCallRenderer
-          // Customize the name here - you can transform it from UPPERCASE to a friendly name
-          name={getDisplayName(message.name) || "Unknown Tool"}
-          args={message.arguments || {}}
-          status="running"
-          result={null}
-        />
-      );
-    }
+    // Check if it's a tool call message - return directly without the bubble wrapper
+    const isToolCall = 
+      message.__typename === "ActionExecutionMessage" || 
+      (typeof message.id === 'string' && message.id.includes('call_')) ||
+      message.__typename === "ResultMessage" || 
+      (typeof message.id === 'string' && message.id.includes('result_')) ||
+      message.toolCalls || 
+      (message.name && message.args && message.status);
 
-    // Check ResultMessage type
-    if (message.__typename === "ResultMessage" || 
-        (typeof message.id === 'string' && message.id.includes('result_'))) {
-      return (
-        <ToolCallRenderer
-          // Customize the name here as well for consistency
-          name={getDisplayName(message.actionName) || "Unknown Tool"}
-          args={message.args || {}}
-          status={message.result && message.result.error ? "error" : "success"}
-          result={message.result || {}}
-        />
-      );
-    }
-    
-    // Original tool call checks - for backward compatibility
-    if (message.toolCalls && message.toolCalls.length > 0) {
-      return (
-        <div className="space-y-3">
-          {message.toolCalls.map((toolCall: any, index: number) => (
-            <ToolCallRenderer
-              key={index}
-              name={getDisplayName(toolCall.name) || "Unknown Tool"}
-              args={toolCall.args || {}}
-              status={toolCall.status || "unknown"}
-              result={toolCall.result}
-            />
-          ))}
-        </div>
-      );
-    }
-    
-    // Original tool call check - for backward compatibility
-    if (message.name && message.args && message.status) {
-      return (
-        <ToolCallRenderer
-          name={getDisplayName(message.name)}
-          args={message.args}
-          status={message.status}
-          result={message.result}
-        />
-      );
+    // If it's a tool call, return the appropriate renderer directly
+    if (isToolCall) {
+      // Check ActionExecutionMessage type
+      if (message.__typename === "ActionExecutionMessage" || 
+          (typeof message.id === 'string' && message.id.includes('call_'))) {
+        return (
+          <ToolCallRenderer
+            name={getDisplayName(message.name) || "Unknown Tool"}
+            args={message.arguments || {}}
+            status="running"
+            result={null}
+          />
+        );
+      }
+
+      // Check ResultMessage type
+      if (message.__typename === "ResultMessage" || 
+          (typeof message.id === 'string' && message.id.includes('result_'))) {
+        return (
+          <ToolCallRenderer
+            name={getDisplayName(message.actionName) || "Unknown Tool"}
+            args={message.args || {}}
+            status={message.result && message.result.error ? "error" : "success"}
+            result={message.result || {}}
+          />
+        );
+      }
+      
+      // Original tool call checks - for backward compatibility
+      if (message.toolCalls && message.toolCalls.length > 0) {
+        return (
+          <div className="space-y-3">
+            {message.toolCalls.map((toolCall: any, index: number) => (
+              <ToolCallRenderer
+                key={index}
+                name={getDisplayName(toolCall.name) || "Unknown Tool"}
+                args={toolCall.args || {}}
+                status={toolCall.status || "unknown"}
+                result={toolCall.result}
+              />
+            ))}
+          </div>
+        );
+      }
+      
+      // Original tool call check - for backward compatibility
+      if (message.name && message.args && message.status) {
+        return (
+          <ToolCallRenderer
+            name={getDisplayName(message.name)}
+            args={message.args}
+            status={message.status}
+            result={message.result}
+          />
+        );
+      }
     }
 
     // Default for assistant text messages
@@ -222,6 +232,26 @@ export function CustomChatUI({
             {visibleMessages.map((message) => {
               // Cast message to ChatMessage type to fix TypeScript errors
               const msg = message as ChatMessage;
+              
+              // Check if it's a tool call message
+              const isToolCall = 
+                msg.__typename === "ActionExecutionMessage" || 
+                (typeof msg.id === 'string' && msg.id.includes('call_')) ||
+                msg.__typename === "ResultMessage" || 
+                (typeof msg.id === 'string' && msg.id.includes('result_')) ||
+                msg.toolCalls || 
+                (msg.name && msg.args && msg.status);
+              
+              // For tool calls, render without the message bubble
+              if (isToolCall && msg.role !== Role.User) {
+                return (
+                  <div key={msg.id} className="flex justify-start w-full">
+                    {renderMessage(msg)}
+                  </div>
+                );
+              }
+              
+              // For regular messages, render with the message bubble
               return (
                 <div
                   key={msg.id}
@@ -245,7 +275,6 @@ export function CustomChatUI({
               <div className="flex justify-start">
                 <div className="max-w-[80%] rounded-lg p-4 bg-black text-white border border-white/10">
                   <div className="flex items-center space-x-3">
-                    {/* <span className="text-sm text-white/70">Thinking...</span> */}
                     <div className="flex space-x-2">
                       <div className="w-2 h-2 rounded-full bg-white/50 animate-pulse"></div>
                       <div

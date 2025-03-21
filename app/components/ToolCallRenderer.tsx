@@ -45,52 +45,102 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
     <div className="my-2 rounded-lg border border-gray-800 overflow-hidden shadow-sm bg-black">
       {/* Header - always visible */}
       <div 
-        className="flex items-center justify-between p-3 bg-zinc-900 cursor-pointer hover:bg-zinc-800 transition-colors"
+        className="flex items-center justify-between p-3 bg-zinc-900 cursor-pointer hover:bg-zinc-800 transition-colors relative overflow-hidden tool-container-shine"
         onClick={toggleExpand}
       >
         <div className="flex items-center space-x-2">
-          <div className="tracking-tight text-white">{name}</div>
-          {/* <div className={`text-xs px-1 py-1 rounded-lg uppercase ${statusColor}`}>
-            {status}
-          </div> */}
-        </div>
-        {/* <button 
-          className="text-gray-400 hover:text-gray-200 focus:outline-none transition-transform transform"
-          aria-label={isExpanded ? "Collapse" : "Expand"}
-        >
+          {/* Tool icon */}
           <svg 
-            className={`h-5 w-5 transition-transform ${isExpanded ? "rotate-180" : ""}`} 
             xmlns="http://www.w3.org/2000/svg" 
-            viewBox="0 0 20 20" 
-            fill="currentColor"
+            width="18" 
+            height="18" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            className="text-gray-400"
           >
-            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M7 10h3v-3l-3.5 -3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1 -3 3l-6 -6a6 6 0 0 1 -8 -8l3.5 3.5" />
           </svg>
-        </button> */}
+          
+          {/* Tool name without animation */}
+          <div className="tracking-tight text-gray-400">
+            {name}
+          </div>
+        </div>
       </div>
 
       {/* Details - visible when expanded */}
       {isExpanded && (
-        <div className="p-3 border-t border-gray-800">
+        <div className="p-3">
           {/* Arguments Section */}
           <div className="mb-3">
-            <div className="text-sm font-medium text-gray-400 mb-1">Arguments:</div>
-            <pre className="text-xs bg-zinc-900 p-2 rounded overflow-auto max-h-40 text-gray-300">
-              {formatJSON(args)}
-            </pre>
+            {/* <div className="text-sm font-medium text-gray-400 mb-1">Arguments:</div> */}
+            <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 text-white font-mono p-4 rounded-xl overflow-x-auto shadow-lg border border-zinc-800/50">
+              <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-red-500/80 shadow-lg shadow-red-500/20"></span>
+                    <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/80 shadow-lg shadow-yellow-500/20"></span>
+                    <span className="h-2.5 w-2.5 rounded-full bg-green-500/80 shadow-lg shadow-green-500/20"></span>
+                  </div>
+                  <span className="text-zinc-400 text-xs font-medium ml-2">json@tool</span>
+                </div>
+                <span className="px-2 py-0.5 text-[10px] font-medium bg-zinc-800/50 rounded-full text-zinc-400 uppercase tracking-wider">
+                  args
+                </span>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-teal-500/90">❯</span>
+                    <span className="text-zinc-400 text-sm">Data</span>
+                  </div>
+                  <pre className="text-emerald-300/90 text-sm pl-4 whitespace-pre-wrap overflow-x-auto">
+                    {formatJSON(args)}
+                  </pre>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Result Section - shown only if there's a result */}
           {result && (
             <div>
               <div className="text-sm font-medium text-gray-400 mb-1">Result:</div>
-              <pre className="text-xs bg-zinc-900 p-2 rounded overflow-auto max-h-40 text-gray-300">
-                {formatJSON(result)}
-              </pre>
+              <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 text-white font-mono p-4 rounded-xl overflow-x-auto shadow-lg border border-zinc-800/50">
+                <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2 mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-1.5">
+                      <span className="h-2.5 w-2.5 rounded-full bg-red-500/80 shadow-lg shadow-red-500/20"></span>
+                      <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/80 shadow-lg shadow-yellow-500/20"></span>
+                      <span className="h-2.5 w-2.5 rounded-full bg-green-500/80 shadow-lg shadow-green-500/20"></span>
+                    </div>
+                    <span className="text-zinc-400 text-xs font-medium ml-2">json@tool</span>
+                  </div>
+                  <span className="px-2 py-0.5 text-[10px] font-medium bg-zinc-800/50 rounded-full text-zinc-400 uppercase tracking-wider">
+                    result
+                  </span>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-teal-500/90">❯</span>
+                      <span className="text-zinc-400 text-sm">Data</span>
+                    </div>
+                    <pre className="text-emerald-300/90 text-sm pl-4 whitespace-pre-wrap overflow-x-auto">
+                      {formatJSON(result)}
+                    </pre>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
       )}
     </div>
   );
-}; 
+};
