@@ -161,7 +161,7 @@ export const POPULAR_MCPS: MCPProps[] = [
     name: 'Discord',
     icon: ICONS.discord,
     description: 'Discord is a VoIP and chat platform designed for creating communities and bringing people together.',
-    link: 'https://discord.com'
+    link: 'https://mcp.composio.dev/discord/broken-chilly-joystick-m7ceuA'
   },
   {
     id: 'drive',

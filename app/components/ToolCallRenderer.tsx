@@ -15,7 +15,7 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
   status,
   result,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
@@ -32,29 +32,30 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
 
   // Status color mapping
   const statusColors: Record<string, string> = {
-    running: "bg-yellow-100 text-yellow-800",
-    success: "bg-green-100 text-green-800",
-    error: "bg-red-100 text-red-800",
-    pending: "bg-blue-100 text-blue-800",
+    running: "bg-yellow-500/20 text-yellow-300",
+    success: "bg-green-500/20 text-green-300",
+    error: "bg-red-500/20 text-red-300",
+    pending: "bg-blue-500/20 text-blue-300",
+    unknown: "bg-gray-500/20 text-gray-300",
   };
 
-  const statusColor = statusColors[status.toLowerCase()] || "bg-gray-100 text-gray-800";
+  const statusColor = statusColors[status.toLowerCase()] || "bg-gray-700/20 text-gray-300";
 
   return (
-    <div className="my-2 rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+    <div className="my-2 rounded-lg border border-gray-800 overflow-hidden shadow-sm bg-black">
       {/* Header - always visible */}
       <div 
-        className="flex items-center justify-between p-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+        className="flex items-center justify-between p-3 bg-zinc-900 cursor-pointer hover:bg-zinc-800 transition-colors"
         onClick={toggleExpand}
       >
         <div className="flex items-center space-x-2">
-          <div className="font-medium text-gray-700">{name}</div>
-          <div className={`text-xs px-2 py-1 rounded-full ${statusColor}`}>
+          <div className="tracking-tight text-white">{name}</div>
+          {/* <div className={`text-xs px-1 py-1 rounded-lg uppercase ${statusColor}`}>
             {status}
-          </div>
+          </div> */}
         </div>
-        <button 
-          className="text-gray-500 hover:text-gray-700 focus:outline-none transition-transform transform"
+        {/* <button 
+          className="text-gray-400 hover:text-gray-200 focus:outline-none transition-transform transform"
           aria-label={isExpanded ? "Collapse" : "Expand"}
         >
           <svg 
@@ -65,16 +66,16 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
           >
             <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
-        </button>
+        </button> */}
       </div>
 
       {/* Details - visible when expanded */}
       {isExpanded && (
-        <div className="p-3 border-t border-gray-200">
+        <div className="p-3 border-t border-gray-800">
           {/* Arguments Section */}
           <div className="mb-3">
-            <div className="text-sm font-medium text-gray-500 mb-1">Arguments:</div>
-            <pre className="text-xs bg-gray-50 p-2 rounded overflow-auto max-h-40">
+            <div className="text-sm font-medium text-gray-400 mb-1">Arguments:</div>
+            <pre className="text-xs bg-zinc-900 p-2 rounded overflow-auto max-h-40 text-gray-300">
               {formatJSON(args)}
             </pre>
           </div>
@@ -82,8 +83,8 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
           {/* Result Section - shown only if there's a result */}
           {result && (
             <div>
-              <div className="text-sm font-medium text-gray-500 mb-1">Result:</div>
-              <pre className="text-xs bg-gray-50 p-2 rounded overflow-auto max-h-40">
+              <div className="text-sm font-medium text-gray-400 mb-1">Result:</div>
+              <pre className="text-xs bg-zinc-900 p-2 rounded overflow-auto max-h-40 text-gray-300">
                 {formatJSON(result)}
               </pre>
             </div>

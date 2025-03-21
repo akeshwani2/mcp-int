@@ -20,6 +20,31 @@ interface CustomChatUIProps {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ChatMessage = any;
 
+// Helper function to convert tool names to display-friendly format
+const getDisplayName = (name: string): string => {
+  if (!name) return "Unknown Tool";
+  
+  // Map specific tool names to friendly display names
+  const nameMap: Record<string, string> = {
+    'GMAIL_FETCH_EMAILS': 'Using Gmail Tool',
+    'GMAIL_CHECK_ACTIVE_CONNECTION': 'Checking Gmail Connection',
+    'GMAIL_GET_REQUIRED_PARAMETERS': 'Getting Gmail Setup',
+    'GMAIL_INITIATE_CONNECTION': 'Initiating Gmail Auth',
+    // Add more mappings as needed
+  };
+  
+  // Return the mapped name if it exists, otherwise format the original name
+  if (nameMap[name]) {
+    return nameMap[name];
+  }
+  
+  // Format the name by replacing underscores with spaces and capitalizing each word
+  return name
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
 export function CustomChatUI({
   instructions,
   labels = {
@@ -82,18 +107,70 @@ export function CustomChatUI({
   }, []);
 
   // Render different types of messages
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderMessage = (message: ChatMessage) => {
+    // For debugging - log the message structure
+    console.log("Message to render:", message);
+
+    // Skip rendering for empty messages or certain message types we want to ignore
+    if (!message || message.__typename === "AgentStateMessage") {
+      return null;
+    }
+
     // Check if message is a user message
     if (message.role === Role.User) {
       return <div className="whitespace-pre-wrap">{message.content}</div>;
     }
 
-    // Check if message has tool call properties
+    // Check ActionExecutionMessage type
+    if (message.__typename === "ActionExecutionMessage" || 
+        (typeof message.id === 'string' && message.id.includes('call_'))) {
+      return (
+        <ToolCallRenderer
+          // Customize the name here - you can transform it from UPPERCASE to a friendly name
+          name={getDisplayName(message.name) || "Unknown Tool"}
+          args={message.arguments || {}}
+          status="running"
+          result={null}
+        />
+      );
+    }
+
+    // Check ResultMessage type
+    if (message.__typename === "ResultMessage" || 
+        (typeof message.id === 'string' && message.id.includes('result_'))) {
+      return (
+        <ToolCallRenderer
+          // Customize the name here as well for consistency
+          name={getDisplayName(message.actionName) || "Unknown Tool"}
+          args={message.args || {}}
+          status={message.result && message.result.error ? "error" : "success"}
+          result={message.result || {}}
+        />
+      );
+    }
+    
+    // Original tool call checks - for backward compatibility
+    if (message.toolCalls && message.toolCalls.length > 0) {
+      return (
+        <div className="space-y-3">
+          {message.toolCalls.map((toolCall: any, index: number) => (
+            <ToolCallRenderer
+              key={index}
+              name={getDisplayName(toolCall.name) || "Unknown Tool"}
+              args={toolCall.args || {}}
+              status={toolCall.status || "unknown"}
+              result={toolCall.result}
+            />
+          ))}
+        </div>
+      );
+    }
+    
+    // Original tool call check - for backward compatibility
     if (message.name && message.args && message.status) {
       return (
         <ToolCallRenderer
-          name={message.name}
+          name={getDisplayName(message.name)}
           args={message.args}
           status={message.status}
           result={message.result}
@@ -102,7 +179,7 @@ export function CustomChatUI({
     }
 
     // Default for assistant text messages
-    return <Markdown content={message.content} />;
+    return message.content ? <Markdown content={message.content} /> : null;
   };
 
   return (
@@ -111,7 +188,7 @@ export function CustomChatUI({
       <div className="flex justify-between items-center py-2">
         <h2 className="text-lg font-light">{labels.title}</h2>
         <div className="flex space-x-2">
-          {/* <button
+          <button
             onClick={reloadMessages}
             className="p-2 rounded-full cursor-pointer hover:scale-105 hover:bg-white/10 transition-all duration-300"
             aria-label="Reload conversation"
@@ -130,7 +207,7 @@ export function CustomChatUI({
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-          </button> */}
+          </button>
         </div>
       </div>
 
