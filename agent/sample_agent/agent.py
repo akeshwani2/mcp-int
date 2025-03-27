@@ -1,7 +1,4 @@
-"""
-This is the main entry point for the agent.
-It defines the workflow graph, state, tools, nodes and edges.
-"""
+
 
 from typing_extensions import Literal, TypedDict, Dict, List, Any, Union, Optional
 from langchain_openai import ChatOpenAI

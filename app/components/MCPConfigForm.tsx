@@ -13,7 +13,6 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import { useLocalStorage } from '../hooks/useLocalStorage'
 import Link from 'next/link'
 import { MarketplacePopup } from '../components/MarketplacePopup'
 
@@ -37,49 +36,31 @@ interface AgentState {
   mcp_config: Record<string, ServerConfig>
 }
 
-// Local storage key for saving agent state
-const STORAGE_KEY = 'mcp-agent'
-
-const ExternalLink = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="w-3 h-3 ml-1"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-    />
-  </svg>
-)
+// Server returned from API
+interface MCPServerFromDB {
+  id: string
+  name: string
+  transport: string
+  command: string | null
+  args: string | null
+  url: string | null
+  sessionId: string
+  createdAt: string
+  updatedAt: string
+  lastUsed: string | null
+}
 
 export function MCPConfigForm() {
-  // Use our localStorage hook for persistent storage
-  const [savedConfigs, setSavedConfigs] = useLocalStorage<Record<string, ServerConfig>>(
-    STORAGE_KEY,
-    {}
-  )
-
-  // Initialize agent state with the data from localStorage
+  // State for server configurations
+  const [configs, setConfigs] = useState<Record<string, ServerConfig>>({})
+  
+  // Update agent state when configs change
   const { state: agentState, setState: setAgentState } = useCoAgent<AgentState>({
     name: 'sample_agent',
     initialState: {
-      mcp_config: savedConfigs,
+      mcp_config: {},
     },
   })
-
-  // Simple getter for configs
-  const configs = agentState?.mcp_config || {}
-
-  // Simple setter wrapper for configs
-  const setConfigs = (newConfigs: Record<string, ServerConfig>) => {
-    setAgentState({ ...agentState, mcp_config: newConfigs })
-    setSavedConfigs(newConfigs)
-  }
 
   const [serverName, setServerName] = useState('')
   const [connectionType, setConnectionType] = useState<ConnectionType>('stdio')
@@ -98,45 +79,151 @@ export function MCPConfigForm() {
   ).length
   const sseServers = Object.values(configs).filter((config) => config.transport === 'sse').length
 
-  // Set loading to false when state is loaded
+  // Fetch servers from API
   useEffect(() => {
-    if (agentState) {
-      setIsLoading(false)
+    const fetchServers = async () => {
+      try {
+        const response = await fetch('/api/servers')
+        if (!response.ok) {
+          throw new Error('Failed to fetch servers')
+        }
+        
+        const serverData: MCPServerFromDB[] = await response.json()
+        
+        // Convert the API response to our ServerConfig format
+        const configsFromDB: Record<string, ServerConfig> = {}
+        
+        serverData.forEach(server => {
+          if (server.transport === 'stdio') {
+            configsFromDB[server.name] = {
+              command: server.command || '',
+              args: server.args ? JSON.parse(server.args) : [],
+              transport: 'stdio' as const
+            }
+          } else if (server.transport === 'sse') {
+            configsFromDB[server.name] = {
+              url: server.url || '',
+              transport: 'sse' as const
+            }
+          }
+        })
+        
+        setConfigs(configsFromDB)
+        setAgentState({ ...agentState, mcp_config: configsFromDB })
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Error fetching servers:', error)
+        setIsLoading(false)
+      }
     }
-  }, [agentState])
+    
+    fetchServers()
+  }, [])
 
-  const addConfig = () => {
+  const addConfig = async () => {
     if (!serverName) return
 
-    const newConfig =
-      connectionType === 'stdio'
-        ? {
-            command,
-            args: args.split(' ').filter((arg) => arg.trim() !== ''),
-            transport: 'stdio' as const,
-          }
-        : {
-            url,
-            transport: 'sse' as const,
-          }
+    // Create new server config data
+    const serverData = {
+      name: serverName,
+      transport: connectionType,
+      ...(connectionType === 'stdio' ? { 
+        command,
+        args: args.split(' ').filter(arg => arg.trim() !== '')
+      } : { 
+        url 
+      })
+    }
 
-    setConfigs({
-      ...configs,
-      [serverName]: newConfig,
-    })
+    try {
+      // Save server to database via API
+      const response = await fetch('/api/servers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(serverData),
+      })
 
-    // Reset form
-    setServerName('')
-    setCommand('')
-    setArgs('')
-    setUrl('')
-    setShowAddServerForm(false)
+      if (!response.ok) {
+        throw new Error('Failed to create server')
+      }
+
+      // Get the server config
+      const newConfig =
+        connectionType === 'stdio'
+          ? {
+              command,
+              args: args.split(' ').filter((arg) => arg.trim() !== ''),
+              transport: 'stdio' as const,
+            }
+          : {
+              url,
+              transport: 'sse' as const,
+            }
+
+      // Update local state
+      const updatedConfigs = {
+        ...configs,
+        [serverName]: newConfig,
+      }
+      
+      setConfigs(updatedConfigs)
+      setAgentState({ ...agentState, mcp_config: updatedConfigs })
+
+      // Reset form
+      setServerName('')
+      setCommand('')
+      setArgs('')
+      setUrl('')
+      setShowAddServerForm(false)
+    } catch (error) {
+      console.error('Error creating server:', error)
+      alert('Failed to create server. Please try again.')
+    }
   }
 
-  const removeConfig = (name: string) => {
-    const newConfigs = { ...configs }
-    delete newConfigs[name]
-    setConfigs(newConfigs)
+  const removeConfig = async (name: string) => {
+    try {
+      // Find the server id by name
+      const serverToDelete = Object.entries(configs).find(([serverName]) => serverName === name);
+      if (!serverToDelete) {
+        throw new Error('Server not found');
+      }
+      
+      // Get the server config and find its id in our database
+      // For now, we need to fetch all servers to find the id by name
+      const response = await fetch('/api/servers');
+      if (!response.ok) {
+        throw new Error('Failed to fetch servers');
+      }
+      
+      const servers: MCPServerFromDB[] = await response.json();
+      const serverFromDB = servers.find(server => server.name === name);
+      
+      if (!serverFromDB) {
+        throw new Error('Server not found in database');
+      }
+      
+      // Delete server from database
+      const deleteResponse = await fetch(`/api/servers/${serverFromDB.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!deleteResponse.ok) {
+        throw new Error('Failed to delete server');
+      }
+      
+      // Update local state
+      const newConfigs = { ...configs };
+      delete newConfigs[name];
+      
+      setConfigs(newConfigs);
+      setAgentState({ ...agentState, mcp_config: newConfigs });
+    } catch (error) {
+      console.error('Error removing server:', error);
+      alert('Failed to remove server. Please try again.');
+    }
   }
 
   if (isLoading) {
@@ -248,15 +335,12 @@ export function MCPConfigForm() {
               </div>
 
               <div className="flex flex-col items-start">
-                <div className="mb-2 inline-flex items-center px-1.5 py-0.5 rounded-sm text-xs border border-zinc-700 bg-background">
+                <div className="flex items-center">
                   {config.transport === 'stdio' ? (
-                    <TerminalSquare className="w-3 h-3 mr-1 text-zinc-500" />
+                    <TerminalSquare size={16} className="mr-2 text-green-500" />
                   ) : (
-                    <Globe className="w-3 h-3 mr-1 text-zinc-500" />
+                    <Globe size={16} className="mr-2 text-blue-500" />
                   )}
-                  <span className=" text-zinc-500">
-                    Server Type: <span className="uppercase">{config.transport}</span>
-                  </span>
                 </div>
 
                 <h3 className="text-sm font-medium text-white mb-1">{name}</h3>
@@ -291,6 +375,17 @@ export function MCPConfigForm() {
 
             <div className="p-4 space-y-4">
               <div>
+                <label className="block text-xs text-zinc-500 mb-1.5">Server Name</label>
+                <input
+                  type="text"
+                  value={serverName}
+                  onChange={(e) => setServerName(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded text-xs px-3 py-2 text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-700"
+                  placeholder="e.g. Gmail"
+                />
+              </div>
+
+              <div>
                 <label className="block text-xs text-zinc-500 mb-1.5">Server Type</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -319,21 +414,11 @@ export function MCPConfigForm() {
                   </button>
                 </div>
               </div>
-              <div>
-                <label className="block text-xs text-zinc-500 mb-1.5">Server Name</label>
-                <input
-                  type="text"
-                  value={serverName}
-                  onChange={(e) => setServerName(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded text-xs px-3 py-2 text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-700"
-                  placeholder="e.g. gmail-service, cal-bot"
-                />
-              </div>
 
               {connectionType === 'stdio' ? (
                 <>
                   <div>
-                    <label className="block text-xs text-zinc-500 mb-1.5">Script</label>
+                    <label className="block text-xs text-zinc-500 mb-1.5">Command</label>
                     <input
                       type="text"
                       value={command}
