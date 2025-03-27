@@ -6,6 +6,8 @@ import { useState, useRef, useEffect } from "react";
 import { ArrowUp, StopCircle } from "lucide-react";
 import { Markdown } from "@copilotkit/react-ui";
 import { ToolCallRenderer } from "./ToolCallRenderer";
+import EmailSummaryDashboard from "./EmailSummaryDashboard";
+import CalendarWidget from "./CalendarWidget";
 
 interface CustomChatUIProps {
   instructions: string;
@@ -14,6 +16,7 @@ interface CustomChatUIProps {
     initial: string;
     placeholder: string;
   };
+  tokens?: string | null;
 }
 
 // Add this to eslint.config.mjs to suppress any type errors
@@ -52,6 +55,7 @@ export function CustomChatUI({
     initial: "Need any help?",
     placeholder: "Ask a question...",
   },
+  tokens,
 }: CustomChatUIProps) {
   const {
     visibleMessages,
@@ -224,9 +228,15 @@ export function CustomChatUI({
       {/* Messages - Only this section should scroll */}
       <div className="flex-1 overflow-y-auto p-4 overflow-x-hidden">
         {visibleMessages.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-white text-2xl tracking-tight">{labels.initial}</p>
-          </div>
+          tokens ? (
+            <div className="w-full h-full">
+              <EmailSummaryDashboard tokens={tokens} />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-white text-2xl tracking-tight">{labels.initial}</p>
+            </div>
+          )
         ) : (
           <div className="space-y-6 w-full">
             {visibleMessages.map((message) => {

@@ -11,12 +11,45 @@ import { CustomChatUI } from "./components/CustomChatUI";
 export default function Home() {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState("home");
+  const [gmailTokens, setGmailTokens] = useState<string | null>(null);
 
   // Force dark mode and prevent body scrolling
   useEffect(() => {
     document.documentElement.classList.add("dark");
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
+    
+    // Check if user is already authenticated with Gmail
+    const checkGmailAuth = () => {
+      // Check for cookies that indicate Gmail is connected
+      const cookies = document.cookie.split(';').map(c => c.trim());
+      const gmailConnected = cookies.some(c => c.startsWith('gmail_connected='));
+      const tokenCookie = cookies.find(c => c.startsWith('gmail_tokens='));
+      
+      if (gmailConnected && tokenCookie) {
+        // If token cookie exists, use that
+        const tokenValue = tokenCookie.split('=')[1];
+        try {
+          const decodedValue = decodeURIComponent(tokenValue);
+          setGmailTokens(decodedValue);
+          return;
+        } catch (e) {
+          console.error('Failed to decode token cookie:', e);
+        }
+      }
+      
+      // If no tokens in cookies, use environment variables
+      const envTokens = {
+        access_token: process.env.NEXT_PUBLIC_GMAIL_ACCESS_TOKEN || "",
+        refresh_token: process.env.NEXT_PUBLIC_GMAIL_REFRESH_TOKEN || "",
+        token_type: "Bearer",
+        scope: "https://www.googleapis.com/auth/gmail.readonly"
+      };
+      
+      setGmailTokens(JSON.stringify(envTokens));
+    };
+    
+    checkGmailAuth();
     
     return () => {
       document.body.style.overflow = "";
@@ -48,7 +81,7 @@ export default function Home() {
         </div>
         
         {/* Chat UI takes the full area */}
-        <div className="w-full h-full max-w-6xl mx-auto overflow-hidden">
+        <div className="w-full flex-1 max-w-6xl mx-auto overflow-hidden">
           <CustomChatUI
             instructions="You are a professional assistant named Echo, providing expert guidance on MCP server configuration and management. Be concise and helpful."
             labels={{
@@ -56,6 +89,7 @@ export default function Home() {
               initial: "How can I help you today?",
               placeholder: "Ask Echo a question...",
             }}
+            tokens={gmailTokens}
           />
         </div>
       </div>
