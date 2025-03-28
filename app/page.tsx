@@ -11,7 +11,16 @@ import { CustomChatUI } from "./components/CustomChatUI";
 export default function Home() {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState("home");
+  const [activeView, setActiveView] = useState("chat");
   const [gmailTokens, setGmailTokens] = useState<string | null>(null);
+  const [assistantPreferences, setAssistantPreferences] = useState({
+    emailEnabled: false,
+    calendarEnabled: false,
+    tasksEnabled: false,
+    userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    notificationsEnabled: false,
+    proactiveHelp: true
+  });
 
   // Force dark mode and prevent body scrolling
   useEffect(() => {
@@ -32,6 +41,7 @@ export default function Home() {
         try {
           const decodedValue = decodeURIComponent(tokenValue);
           setGmailTokens(decodedValue);
+          setAssistantPreferences(prev => ({ ...prev, emailEnabled: true }));
           return;
         } catch (e) {
           console.error('Failed to decode token cookie:', e);
@@ -46,16 +56,39 @@ export default function Home() {
         scope: "https://www.googleapis.com/auth/gmail.readonly"
       };
       
-      setGmailTokens(JSON.stringify(envTokens));
+      if (envTokens.access_token && envTokens.refresh_token) {
+        setGmailTokens(JSON.stringify(envTokens));
+        setAssistantPreferences(prev => ({ ...prev, emailEnabled: true }));
+      }
     };
     
     checkGmailAuth();
+    
+    // Load assistant preferences from local storage if available
+    const loadPreferences = () => {
+      const storedPrefs = localStorage.getItem('assistantPreferences');
+      if (storedPrefs) {
+        try {
+          const prefs = JSON.parse(storedPrefs);
+          setAssistantPreferences(prev => ({ ...prev, ...prefs }));
+        } catch (e) {
+          console.error('Failed to parse stored preferences:', e);
+        }
+      }
+    };
+    
+    loadPreferences();
     
     return () => {
       document.body.style.overflow = "";
       document.documentElement.style.overflow = "";
     };
   }, []);
+  
+  // Save preferences when they change
+  useEffect(() => {
+    localStorage.setItem('assistantPreferences', JSON.stringify(assistantPreferences));
+  }, [assistantPreferences]);
 
   const handleNavigation = (page: string) => {
     if (page === "home") {
@@ -70,26 +103,75 @@ export default function Home() {
       {/* Client component that sets up the Copilot action handler */}
       <CopilotActionHandler />
 
-      {/* Pill-shaped sidebar */}
-      <Sidebar onNavigate={handleNavigation} onConfigClick={() => setIsConfigOpen(true)} />
+      {/* Pill-shaped sidebar - Now with activeView state */}
+      <Sidebar 
+        onNavigate={handleNavigation} 
+        onConfigClick={() => setIsConfigOpen(true)} 
+        setActiveView={setActiveView}
+        activeView={activeView}
+      />
 
       {/* Main content area - Now full width for chat */}
       <div className="flex-1 p-4 md:p-8 flex flex-col overflow-hidden">
-        {/* Server tracker */}
-        <div className="absolute top-4 right-4 z-10">
+        {/* Server tracker and Gmail status indicator */}
+        <div className="absolute top-4 right-4 z-10 flex items-center space-x-2">
+          <div className="flex items-center">
+            {gmailTokens ? (
+              <div className="flex items-center bg-zinc-900 rounded-full px-2 py-0.5 border border-zinc-800">
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1.5"></span>
+                <span className="text-xs text-zinc-400 mr-2">Gmail</span>
+                <button 
+                  onClick={() => {
+                    // Clear any existing tokens
+                    document.cookie = "gmail_tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                    document.cookie = "gmail_connected=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                    // Reload page
+                    window.location.href = '/api/gmail/auth?force_refresh=true';
+                  }}
+                  className="text-xs text-blue-400 hover:text-blue-300"
+                >
+                  Reconnect
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center bg-zinc-900 rounded-full px-2 py-0.5 border border-zinc-800">
+                <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-1.5"></span>
+                <span className="text-xs text-zinc-400 mr-2">Gmail</span>
+                <button 
+                  onClick={() => {
+                    window.location.href = '/api/gmail/auth';
+                  }}
+                  className="text-xs text-blue-400 hover:text-blue-300"
+                >
+                  Connect
+                </button>
+              </div>
+            )}
+          </div>
           <ServerTracker />
         </div>
         
-        {/* Chat UI takes the full area */}
+        {/* Chat UI takes the full area - Pass activeView */}
         <div className="w-full flex-1 max-w-6xl mx-auto overflow-hidden">
           <CustomChatUI
-            instructions="You are a professional assistant named Echo, providing expert guidance on MCP server configuration and management. Be concise and helpful."
+            instructions={`You are Echo, a helpful and versatile personal assistant. You help the user manage their email, calendar, tasks, and answer questions.
+            
+Current assistant preferences:
+- Email integration: ${assistantPreferences.emailEnabled ? 'Enabled' : 'Disabled'}
+- Calendar integration: ${assistantPreferences.calendarEnabled ? 'Enabled' : 'Disabled'}
+- Task management: ${assistantPreferences.tasksEnabled ? 'Enabled' : 'Disabled'}
+- User timezone: ${assistantPreferences.userTimezone}
+- Proactive help: ${assistantPreferences.proactiveHelp ? 'Enabled' : 'Disabled'}
+
+Be concise but friendly in your responses. If a service isn't enabled yet, guide the user on how to enable it.`}
             labels={{
               title: "",
               initial: "How can I help you today?",
-              placeholder: "Ask Echo a question...",
+              placeholder: "Ask Echo anything...",
             }}
             tokens={gmailTokens}
+            activeView={activeView}
+            setActiveView={setActiveView}
           />
         </div>
       </div>

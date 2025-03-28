@@ -1,18 +1,22 @@
 "use client";
 
 import React from "react";
-import { MessageCircle, Store, File, Server } from "lucide-react";
+import { MessageCircle, Store, File, Server, Mail, Calendar, CheckSquare } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 interface SidebarProps {
   onNavigate?: (page: string) => void;
   onConfigClick?: () => void;
+  setActiveView?: (view: string) => void;
+  activeView?: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
   onNavigate = () => {}, 
-  onConfigClick = () => {}
+  onConfigClick = () => {},
+  setActiveView = () => {},
+  activeView = "chat"
 }) => {
   const pathname = usePathname();
   
@@ -22,16 +26,44 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     bg-black border border-white/20 rounded-full py-4 px-2 z-50
                     shadow-lg"
     >
-      <Link href="/">
-        <button
-          className={`p-2 cursor-pointer hover:scale-105 hover:text-white hover:bg-white/10 rounded-full mb-4 transition-all duration-300 ${
-            pathname === "/" ? "text-white bg-red-500" : "text-white/70"
-          }`}
-          aria-label="Home"
-        >
-          <MessageCircle size={20} />
-        </button>
+      <button
+        onClick={() => setActiveView("chat")}
+        className={`p-2 cursor-pointer hover:scale-105 hover:text-white hover:bg-white/10 rounded-full mb-4 transition-all duration-300 ${
+          activeView === "chat" ? "text-white bg-red-500" : "text-white/70"
+        }`}
+        aria-label="Chat"
+      >
+        <MessageCircle size={20} />
+      </button>
+
+      <button
+        onClick={() => setActiveView("email")}
+        className={`p-2 cursor-pointer hover:scale-105 hover:text-white hover:bg-white/10 rounded-full mb-4 transition-all duration-300 ${
+          activeView === "email" ? "text-white bg-red-500" : "text-white/70"
+        }`}
+        aria-label="Email"
+      >
+        <Mail size={20} />
+      </button>
+
+      <Link href="/calendar">
+      <button
+        className="p-2 cursor-pointer hover:scale-105 hover:text-white hover:bg-white/10 rounded-full mb-4 transition-all duration-300 "
+        aria-label="Calendar"
+      >
+        <Calendar size={20} />
+      </button>
       </Link>
+      <button
+        onClick={() => setActiveView("tasks")}
+        className={`p-2 cursor-pointer hover:scale-105 hover:text-white hover:bg-white/10 rounded-full mb-4 transition-all duration-300 ${
+          activeView === "tasks" ? "text-white bg-red-500" : "text-white/70"
+        }`}
+        aria-label="Tasks"
+      >
+        <CheckSquare size={20} />
+      </button>
+      
       <Link href="/marketplace">
         <button
           className={`p-2 cursor-pointer hover:scale-105 hover:text-white hover:bg-white/10 rounded-full mb-4 transition-all duration-300 ${
@@ -45,22 +77,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       <button
         onClick={onConfigClick}
-        className="p-2 cursor-pointer hover:scale-105 hover:text-white hover:bg-white/10 rounded-full mb-4 transition-all duration-300 text-white/70"
+        className="p-2 cursor-pointer hover:scale-105 hover:text-white hover:bg-white/10 rounded-full transition-all duration-300 text-white/70"
         aria-label="Server Configuration"
       >
         <Server size={20} />
       </button>
-
-      <Link href="/docs">
-        <button
-          className={`p-2 cursor-pointer hover:scale-105 hover:text-white hover:bg-white/10 rounded-full transition-all duration-300 ${
-            pathname === "/docs" ? "text-white bg-red-500" : "text-white/70"
-          }`}
-          aria-label="Docs"
-      >
-          <File size={20} />
-        </button>
-      </Link>
     </div>
   );
 };

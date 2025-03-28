@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const { tokens } = await oauth2Client.getToken(code);
     
     // Store tokens securely in cookies
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     
     // Set token cookie (httpOnly for security)
     cookieStore.set('gmail_tokens', JSON.stringify(tokens), {

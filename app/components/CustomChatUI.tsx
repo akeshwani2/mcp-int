@@ -3,11 +3,12 @@
 import { useCopilotChat, UseCopilotChatOptions } from "@copilotkit/react-core";
 import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
 import { useState, useRef, useEffect } from "react";
-import { ArrowUp, StopCircle } from "lucide-react";
+import { ArrowUp, StopCircle, Calendar, CheckSquare, Mail, Clock, Menu, X } from "lucide-react";
 import { Markdown } from "@copilotkit/react-ui";
 import { ToolCallRenderer } from "./ToolCallRenderer";
 import EmailSummaryDashboard from "./EmailSummaryDashboard";
 import CalendarWidget from "./CalendarWidget";
+import TasksWidget from "./TasksWidget";
 
 interface CustomChatUIProps {
   instructions: string;
@@ -17,6 +18,8 @@ interface CustomChatUIProps {
     placeholder: string;
   };
   tokens?: string | null;
+  activeView?: string;
+  setActiveView?: (view: string) => void;
 }
 
 // Add this to eslint.config.mjs to suppress any type errors
@@ -33,6 +36,17 @@ const getDisplayName = (name: string): string => {
     'GMAIL_CHECK_ACTIVE_CONNECTION': 'Checking Gmail Connection',
     'GMAIL_GET_REQUIRED_PARAMETERS': 'Getting Gmail Setup',
     'GMAIL_INITIATE_CONNECTION': 'Initiating Gmail Auth',
+    'CALENDAR_CREATE_EVENT': 'Creating Calendar Event',
+    'CALENDAR_GET_EVENTS': 'Retrieving Calendar Events',
+    'CALENDAR_UPDATE_EVENT': 'Updating Calendar Event',
+    'CALENDAR_DELETE_EVENT': 'Deleting Calendar Event',
+    'CALENDAR_FIND_AVAILABLE_SLOTS': 'Finding Available Time Slots',
+    'TASK_CREATE': 'Creating Task',
+    'TASK_LIST': 'Retrieving Tasks',
+    'TASK_UPDATE': 'Updating Task',
+    'TASK_DELETE': 'Deleting Task',
+    'TASK_MARK_COMPLETED': 'Completing Task',
+    'TASK_SUMMARY': 'Analyzing Tasks',
     // Add more mappings as needed
   };
   
@@ -51,11 +65,13 @@ const getDisplayName = (name: string): string => {
 export function CustomChatUI({
   instructions,
   labels = {
-    title: "Echo",
-    initial: "Need any help?",
-    placeholder: "Ask a question...",
+    title: "",
+    initial: "How can I help you today?",
+    placeholder: "Ask me anything...",
   },
   tokens,
+  activeView = "chat",
+  setActiveView = () => {},
 }: CustomChatUIProps) {
   const {
     visibleMessages,
@@ -72,6 +88,8 @@ export function CustomChatUI({
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<string | null>(null);
 
   const sendMessage = () => {
     if (inputValue.trim() && !isLoading) {
@@ -196,11 +214,30 @@ export function CustomChatUI({
     return message.content ? <Markdown content={message.content} /> : null;
   };
 
+  // Quick action handler
+  const handleQuickAction = (action: string) => {
+    const actionMap: Record<string, string> = {
+      "schedule": "Schedule a meeting for me tomorrow at 2pm with the product team",
+      "summarize": "Summarize my unread emails and show me what needs my attention",
+      "reminder": "Set a reminder to call my client in 2 hours",
+      "tasks": "Show me all my tasks due this week and help me prioritize them",
+      "write": "Write an email to my team about the upcoming product launch"
+    };
+
+    if (actionMap[action]) {
+      appendMessage(
+        new TextMessage({ content: actionMap[action], role: Role.User })
+      );
+    }
+  };
+
   return (
     <div className="flex flex-col h-full relative overflow-hidden">
-      {/* Header */}
-      <div className="flex justify-between items-center py-2">
-        <h2 className="text-lg font-light">{labels.title}</h2>
+      {/* Header with Title Only */}
+      <div className="flex justify-between items-center py-2 border-b border-zinc-800">
+        <div className="flex items-center">
+          <h2 className="text-lg font-light mr-4">{labels.title}</h2>
+        </div>
         <div className="flex space-x-2">
           <button
             onClick={reloadMessages}
@@ -225,147 +262,176 @@ export function CustomChatUI({
         </div>
       </div>
 
-      {/* Messages - Only this section should scroll */}
+      {/* Remove Mobile Menu since navigation is now in sidebar */}
+
+      {/* Content Area - Changes based on active view */}
       <div className="flex-1 overflow-y-auto p-4 overflow-x-hidden">
-        {visibleMessages.length === 0 ? (
-          tokens ? (
-            <div className="w-full h-full">
-              <EmailSummaryDashboard tokens={tokens} />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-white text-2xl tracking-tight">{labels.initial}</p>
-            </div>
-          )
-        ) : (
-          <div className="space-y-6 w-full">
-            {visibleMessages.map((message) => {
-              // Cast message to ChatMessage type to fix TypeScript errors
-              const msg = message as ChatMessage;
-              
-              // Check if it's a tool call message
-              const isToolCall = 
-                msg.__typename === "ActionExecutionMessage" || 
-                (typeof msg.id === 'string' && msg.id.includes('call_')) ||
-                msg.__typename === "ResultMessage" || 
-                (typeof msg.id === 'string' && msg.id.includes('result_')) ||
-                msg.toolCalls || 
-                (msg.name && msg.args && msg.status);
-              
-              // For tool calls, render without the message bubble
-              if (isToolCall && msg.role !== Role.User) {
-                return (
-                  <div key={msg.id} className="flex justify-start w-full">
-                    {renderMessage(msg)}
-                  </div>
-                );
-              }
-              
-              // For regular messages, render with the message bubble
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex ${
-                    msg.role === Role.User ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-lg p-4 ${
-                      msg.role === Role.User
-                        ? "bg-white text-black"
-                        : "bg-black text-white border border-white/10"
-                    }`}
-                  >
-                    {renderMessage(msg)}
-                  </div>
+        {activeView === "chat" && (
+          <>
+            {visibleMessages.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 mb-6 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                  </svg>
                 </div>
-              );
-            })}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="max-w-[80%] rounded-lg p-4 bg-black text-white border border-white/10">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-white/50 animate-pulse"></div>
-                      <div
-                        className="w-2 h-2 rounded-full bg-white/50 animate-pulse"
-                        style={{ animationDelay: "0.2s" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 rounded-full bg-white/50 animate-pulse"
-                        style={{ animationDelay: "0.4s" }}
-                      ></div>
-                    </div>
-                  </div>
+                <h3 className="text-xl font-medium mb-2">{labels.initial}</h3>
+                <p className="text-zinc-400 text-center max-w-md mb-8">I can help you manage emails, schedule events, track tasks, and more.</p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl w-full">
+                  <button 
+                    onClick={() => handleQuickAction("schedule")}
+                    className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
+                  >
+                    <Calendar size={18} className="text-blue-400" />
+                    <span>Schedule a meeting</span>
+                  </button>
+                  
+                  <button 
+                    onClick={() => handleQuickAction("summarize")}
+                    className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
+                  >
+                    <Mail size={18} className="text-purple-400" />
+                    <span>Summarize my emails</span>
+                  </button>
+                  
+                  <button 
+                    onClick={() => handleQuickAction("reminder")}
+                    className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
+                  >
+                    <Clock size={18} className="text-green-400" />
+                    <span>Set a reminder</span>
+                  </button>
+                  
+                  <button 
+                    onClick={() => handleQuickAction("tasks")}
+                    className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
+                  >
+                    <CheckSquare size={18} className="text-amber-400" />
+                    <span>Manage my tasks</span>
+                  </button>
                 </div>
               </div>
+            ) : (
+              <div className="space-y-6 w-full">
+                {visibleMessages.map((message, index) => {
+                  // Cast message to ChatMessage type to fix TypeScript errors
+                  const msg = message as ChatMessage;
+                  
+                  // Check if it's a tool call message
+                  const isToolCall = 
+                    msg.__typename === "ActionExecutionMessage" || 
+                    (typeof msg.id === 'string' && msg.id.includes('call_')) ||
+                    msg.__typename === "ResultMessage" || 
+                    (typeof msg.id === 'string' && msg.id.includes('result_')) ||
+                    msg.toolCalls || 
+                    (msg.name && msg.args && msg.status);
+                  
+                  if (isToolCall) {
+                    // Render tool calls directly
+                    return (
+                      <div key={index} className="my-2">
+                        {renderMessage(msg)}
+                      </div>
+                    );
+                  }
+                  
+                  // Render user and assistant messages
+                  const isUser = msg.role === Role.User;
+                  return (
+                    <div key={index} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`rounded-xl py-2 px-3 max-w-4xl ${isUser ? 'bg-blue-600 text-white' : 'bg-zinc-800 text-white'}`}>
+                        {renderMessage(msg)}
+                      </div>
+                    </div>
+                  );
+                })}
+                <div ref={messagesEndRef} />
+              </div>
             )}
-            <div ref={messagesEndRef} />
+          </>
+        )}
+        
+        {activeView === "email" && (
+          <div className="w-full h-full">
+            {tokens ? (
+              <EmailSummaryDashboard tokens={tokens} />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full">
+                <div className="bg-purple-500/20 p-4 rounded-full mb-4">
+                  <Mail size={32} className="text-purple-400" />
+                </div>
+                <h3 className="text-xl font-medium mb-2">Connect Your Email</h3>
+                <p className="text-zinc-400 text-center max-w-md mb-6">
+                  Connect your Gmail account to let me help you manage your inbox.
+                </p>
+                <button 
+                  onClick={() => {
+                    appendMessage(
+                      new TextMessage({ content: "I want to connect my Gmail account", role: Role.User })
+                    );
+                    setActiveView("chat");
+                  }}
+                  className="px-4 py-2 bg-purple-600 rounded-md hover:bg-purple-700 transition-colors"
+                >
+                  Connect Gmail
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {activeView === "calendar" && (
+          <div className="w-full h-full">
+            <CalendarWidget tokens={tokens} variant="full" />
+          </div>
+        )}
+        
+        {activeView === "tasks" && (
+          <div className="w-full h-full">
+            <TasksWidget />
           </div>
         )}
       </div>
 
-      {/* Input */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          sendMessage();
-        }}
-        className="px-4 shrink-0 bg-black"
-      >
-        <div className="flex space-x-2 justify-between items-center">
-          <textarea
-            ref={inputRef}
-            value={inputValue}
-            onChange={autoResizeTextarea}
-            onKeyDown={handleKeyDown}
-            onPaste={(e) => {
-              e.preventDefault();
-              const text = e.clipboardData.getData('text/plain');
-              // Replace all newlines with spaces to keep it a single line
-              const sanitizedText = text.replace(/[\r\n]+/g, ' ');
-              // Update the input value with the sanitized text
-              const newValue = inputValue.substring(0, e.currentTarget.selectionStart) + 
-                              sanitizedText + 
-                              inputValue.substring(e.currentTarget.selectionEnd);
-              setInputValue(newValue);
-            }}
-            placeholder={labels.placeholder}
-            className="flex-1 bg-black text-white rounded-lg px-4 py-2 ring-1 ring-white/20 focus:ring-white/30 transition-all focus:outline-none resize-none overflow-x-auto [&::-webkit-scrollbar]:hidden"
-            style={{
-              height: "41.5px",
-              minHeight: "41.5px",
-              maxHeight: "41.5px",
-              whiteSpace: "nowrap",
-              overflowY: "hidden",
-              overflowX: "auto",
-              scrollbarWidth: "none", /* Firefox */
-              msOverflowStyle: "none", /* IE and Edge */
-            }}
-            disabled={isLoading}
-          />
-          <div className=" flex justify-end">
-            {isLoading ? (
-              <button
-                onClick={stopGeneration}
-                className="!bg-white !text-black px-4 py-3 rounded-lg cursor-pointer hover:scale-105 transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
-                style={{ backgroundColor: "white", color: "black" }}
-              >
-                <StopCircle className="h-5 w-5 text-black" />
-              </button>
-            ) : (
-              <button
-                type="submit"
-                className="!bg-white !text-black px-4 py-3 rounded-lg cursor-pointer hover:scale-105 transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed disabled:scale-100"
-                style={{ backgroundColor: "white", color: "black" }}
-                disabled={!inputValue.trim() || isLoading}
-              >
-                <ArrowUp className="h-5 w-5 text-black" />
-              </button>
-            )}
+      {/* Input area - Only show in chat view */}
+      {activeView === "chat" && (
+        <div className="p-4 border-t border-zinc-800 relative">
+          <div className="flex items-center rounded-xl bg-zinc-800 relative pr-12">
+            <textarea
+              ref={inputRef}
+              value={inputValue}
+              onChange={autoResizeTextarea}
+              onKeyDown={handleKeyDown}
+              placeholder={labels.placeholder}
+              className="w-full bg-transparent border-0 outline-none text-white p-3 resize-none overflow-hidden scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent max-h-32"
+              rows={1}
+            />
+            <button
+              onClick={sendMessage}
+              disabled={isLoading || !inputValue.trim()}
+              className={`absolute right-3 p-2 rounded-full ${
+                isLoading || !inputValue.trim()
+                  ? "text-zinc-500"
+                  : "text-white bg-blue-600 hover:bg-blue-700"
+              } transition-colors duration-300`}
+              aria-label="Send message"
+            >
+              {isLoading ? (
+                <StopCircle
+                  size={20}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    stopGeneration();
+                  }}
+                />
+              ) : (
+                <ArrowUp size={20} />
+              )}
+            </button>
           </div>
         </div>
-      </form>
+      )}
     </div>
   );
 }

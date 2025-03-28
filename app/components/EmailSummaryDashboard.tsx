@@ -54,6 +54,8 @@ const handleReconnectGmail = async () => {
   }
 };
 
+
+
 export default function EmailSummaryDashboard({ tokens }: EmailSummaryDashboardProps) {
   const [summary, setSummary] = useState<EmailSummary>({
     immediateAction: [],
@@ -342,41 +344,37 @@ export default function EmailSummaryDashboard({ tokens }: EmailSummaryDashboardP
       className="w-full max-w-6xl mx-auto opacity-0 animate-fadeIn"
       style={{ animation: 'fadeIn 0.5s forwards' }}
     >
-      <h3 className="text-2xl tracking-tight text-zinc-400 mb-6 text-center">
-        <span className="text-white">Your Email & Meeting Summary</span>
+      <h3 className="text-xl tracking-tight font-medium text-white mb-4">
+        Your Email & Meeting Summary
       </h3>
       
       {/* Calendar Access Section */}
       {parsedTokens && !hasCalendarPermission && (
-        <div className="mb-6 bg-black rounded-xl p-5 border border-zinc-800">
-          <div className="flex items-center gap-2 mb-4">
-            <Calendar className="w-5 h-5 text-white" />
-            <h4 className="text-lg font-medium text-white">Calendar Access</h4>
+        <div className="mb-4 bg-zinc-900 rounded-lg p-3 border border-zinc-800">
+          <div className="flex items-center gap-1.5 mb-2">
+            <Calendar className="w-4 h-4 text-blue-400" />
+            <h4 className="text-sm font-medium text-white">Calendar Access</h4>
           </div>
-          <div className="flex flex-col space-y-4">
-            <p className="text-zinc-400 text-sm">
-              To enable calendar-related features like checking your schedule, please reconnect your Gmail account with calendar permissions.
-            </p>
-            <div>
-              <button
-                onClick={handleReconnectGmail}
-                className="bg-zinc-900 text-white px-4 py-2 rounded-lg text-sm hover:bg-zinc-800 transition-colors border border-zinc-700"
-              >
-                Connect Calendar
-              </button>
-            </div>
-          </div>
+          <p className="text-zinc-400 text-xs mb-2">
+            Connect calendar permissions to enable scheduling features.
+          </p>
+          <button
+            onClick={handleReconnectGmail}
+            className="text-xs bg-zinc-800 text-white px-2 py-1 rounded hover:bg-zinc-700 transition-colors"
+          >
+            Connect Calendar
+          </button>
         </div>
       )}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Immediate Action Emails */}
-        <div className="bg-black rounded-xl p-5 border border-zinc-800 h-full flex flex-col min-h-[300px]">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertCircle className="w-5 h-5 text-white" />
-            <h4 className="text-lg text-white tracking-tight font-medium">High Priority</h4>
+        <div className="bg-black rounded-xl p-4 border border-zinc-800 h-full flex flex-col">
+          <div className="flex items-center gap-1.5 mb-3">
+            <AlertCircle className="w-4 h-4 text-red-400" />
+            <h4 className="text-sm font-medium text-white">High Priority</h4>
           </div>
-          <div className="space-y-4 flex-1 overflow-y-auto">
+          <div className="space-y-3 flex-1 overflow-y-auto">
             {summary.immediateAction.length > 0 ? (
               summary.immediateAction.map((email) => (
                 <a 
@@ -384,9 +382,9 @@ export default function EmailSummaryDashboard({ tokens }: EmailSummaryDashboardP
                   href={getGmailUrl(email.id)} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="block p-4 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 transition-colors text-left"
+                  className="block p-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition-colors text-left"
                 >
-                  <div className="flex justify-between items-start mb-2">
+                  <div className="flex justify-between items-start mb-1">
                     <div className="text-sm font-medium text-white line-clamp-2 leading-snug">
                       {email.isSummaryLoading ? (
                         <span className="inline-flex items-center">
@@ -399,7 +397,7 @@ export default function EmailSummaryDashboard({ tokens }: EmailSummaryDashboardP
                     </div>
                     <ExternalLink className="w-3.5 h-3.5 text-zinc-500 flex-shrink-0 mt-1 ml-2" />
                   </div>
-                  <div className="flex flex-col space-y-1.5">
+                  <div className="flex flex-col space-y-1">
                     <div className="text-xs text-zinc-300">
                       {email.from}
                     </div>
@@ -411,18 +409,18 @@ export default function EmailSummaryDashboard({ tokens }: EmailSummaryDashboardP
                 </a>
               ))
             ) : (
-              <p className="text-zinc-500 text-sm">No high priority emails found</p>
+              <p className="text-zinc-500 text-sm">No high priority emails</p>
             )}
           </div>
         </div>
         
         {/* Combined Medium Priority and Other Emails */}
-        <div className="bg-black rounded-xl p-5 border border-zinc-800 h-full flex flex-col min-h-[300px]">
-          <div className="flex items-center gap-2 mb-4">
-            <Inbox className="w-5 h-5 text-white" />
-            <h4 className="text-lg font-medium text-white">Other</h4>
+        <div className="bg-black rounded-xl p-4 border border-zinc-800 h-full flex flex-col">
+          <div className="flex items-center gap-1.5 mb-3">
+            <Inbox className="w-4 h-4 text-blue-400" />
+            <h4 className="text-sm font-medium text-white">Other Emails</h4>
           </div>
-          <div className="space-y-4 flex-1 overflow-y-auto">
+          <div className="space-y-3 flex-1 overflow-y-auto">
             {[...summary.mediumPriority, ...summary.other].length > 0 ? (
               [...summary.mediumPriority, ...summary.other].slice(0, 5).map((email) => (
                 <a 
@@ -430,9 +428,9 @@ export default function EmailSummaryDashboard({ tokens }: EmailSummaryDashboardP
                   href={getGmailUrl(email.id)} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="block p-4 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 transition-colors text-left"
+                  className="block p-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition-colors text-left"
                 >
-                  <div className="flex justify-between items-start mb-2">
+                  <div className="flex justify-between items-start mb-1">
                     <div className="text-sm font-medium text-white line-clamp-2 leading-snug">
                       {email.isSummaryLoading ? (
                         <span className="inline-flex items-center">
@@ -445,7 +443,7 @@ export default function EmailSummaryDashboard({ tokens }: EmailSummaryDashboardP
                     </div>
                     <ExternalLink className="w-3.5 h-3.5 text-zinc-500 flex-shrink-0 mt-1 ml-2" />
                   </div>
-                  <div className="flex flex-col space-y-1.5">
+                  <div className="flex flex-col space-y-1">
                     <div className="text-xs text-zinc-300">
                       {email.from}
                     </div>
@@ -457,15 +455,24 @@ export default function EmailSummaryDashboard({ tokens }: EmailSummaryDashboardP
                 </a>
               ))
             ) : (
-              <p className="text-zinc-500 text-sm">No other emails found in your inbox</p>
+              <p className="text-zinc-500 text-sm">No other emails found</p>
             )}
           </div>
         </div>
         
         {/* Calendar Widget */}
         {parsedTokens && (
-          <div className="md:col-span-2 lg:col-span-1">
-            <CalendarWidget tokens={tokens} />
+          <div className="lg:row-span-1 relative">
+            <CalendarWidget tokens={tokens} variant="compact" />
+            {/* <div className="absolute top-4 right-4">
+              <button 
+                onClick={handleReconnectGmail}
+                className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition-colors flex items-center"
+              >
+                <RefreshCw className="w-3 h-3 mr-1.5" />
+                Reconnect
+              </button>
+            </div> */}
           </div>
         )}
       </div>

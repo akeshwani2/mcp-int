@@ -2,7 +2,7 @@
 name = "sample_agent"
 version = "0.1.0"
 description = "Starter"
-authors = ["Markus Ecker <markus.ecker@gmail.com>"]
+authors = ["Arhaan Keshwani <arhaankeshwani200@gmail.com>"]
 license = "MIT"
 
 [project]

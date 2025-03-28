@@ -11,7 +11,7 @@ const oauth2Client = new google.auth.OAuth2(
 export async function GET() {
   try {
     // Get tokens from cookies
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const tokensCookie = cookieStore.get('gmail_tokens');
     
     if (!tokensCookie) {

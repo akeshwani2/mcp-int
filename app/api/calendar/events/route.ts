@@ -11,7 +11,7 @@ const oauth2Client = new google.auth.OAuth2(
 export async function GET() {
   try {
     // Get tokens from cookies
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const tokensCookie = cookieStore.get('gmail_tokens');
     
     if (!tokensCookie) {
@@ -61,19 +61,15 @@ export async function GET() {
     });
 
     const events = response.data.items?.map(event => {
-      // Parse start and end times, handling all-day events
-      const start = event.start?.dateTime || event.start?.date;
-      const end = event.end?.dateTime || event.end?.date;
-      const isAllDay = Boolean(event.start?.date && !event.start?.dateTime);
-
+      // Instead of just passing the strings, pass the full objects with dateTime and date
       return {
         id: event.id,
         summary: event.summary,
         description: event.description,
         location: event.location,
-        start,
-        end,
-        isAllDay,
+        start: event.start,
+        end: event.end,
+        isAllDay: Boolean(event.start?.date && !event.start?.dateTime),
         attendees: event.attendees,
         htmlLink: event.htmlLink,
         conferenceData: event.conferenceData
