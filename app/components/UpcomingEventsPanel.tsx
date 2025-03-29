@@ -24,9 +24,10 @@ interface CalendarEvent {
 
 interface UpcomingEventsPanelProps {
   onAddEventClick?: () => void;
+  onConnectAccount?: () => void;
 }
 
-const UpcomingEventsPanel = ({ onAddEventClick }: UpcomingEventsPanelProps) => {
+const UpcomingEventsPanel = ({ onAddEventClick, onConnectAccount }: UpcomingEventsPanelProps) => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,12 +104,22 @@ const UpcomingEventsPanel = ({ onAddEventClick }: UpcomingEventsPanelProps) => {
     try {
       // First try to refresh the token
       const refreshResponse = await fetch('/api/calendar/refresh');
-      await refreshResponse.json();
+      const refreshData = await refreshResponse.json();
+      
+      if (!refreshData.success && refreshData.redirectUrl) {
+        // Instead of direct redirect, set error message
+        setError('Calendar authentication required. Please connect your Google account to use this feature.');
+        return;
+      }
       
       // Now fetch calendar events
       const response = await fetch('/api/calendar/events');
       
       if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          setError('Authentication required. Please connect your Google account to use the calendar feature.');
+          return;
+        }
         throw new Error(`Failed to fetch calendar events: ${response.status}`);
       }
       
@@ -267,13 +278,25 @@ const UpcomingEventsPanel = ({ onAddEventClick }: UpcomingEventsPanelProps) => {
         </div>
       ) : error ? (
         <div className="text-center py-8">
-          <p className="text-zinc-400 text-sm mb-2">{error}</p>
-          <button
-            onClick={fetchCalendarEvents}
-            className="text-xs bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1 rounded border border-zinc-700 transition-colors"
-          >
-            Retry
-          </button>
+          <p className="text-zinc-400 text-sm mb-4">Calendar authentication required. Please connect your Google account to use this feature.</p>
+          <div className="flex justify-center space-x-2">
+            <button
+              onClick={fetchCalendarEvents}
+              className="text-xs bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1 rounded border border-zinc-700 transition-colors"
+            >
+              Retry
+            </button>
+            <button
+              onClick={() => {
+                if (onConnectAccount) {
+                  onConnectAccount();
+                }
+              }}
+              className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded transition-colors"
+            >
+              Connect Google Account
+            </button>
+          </div>
         </div>
       ) : events.length === 0 ? (
         <div className="text-center py-8 bg-zinc-800/50 rounded-lg border border-zinc-700">

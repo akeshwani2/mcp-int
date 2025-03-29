@@ -27,13 +27,15 @@ interface CalendarWidgetProps {
   variant?: 'compact' | 'full'; // compact for email dashboard, full for calendar tab
   showAddEvent?: boolean;
   setShowAddEvent?: React.Dispatch<React.SetStateAction<boolean>>;
+  onConnectAccount?: () => void;
 }
 
 export default function CalendarWidget({ 
   tokens, 
   variant = 'compact', 
   showAddEvent: externalShowAddEvent,
-  setShowAddEvent: externalSetShowAddEvent 
+  setShowAddEvent: externalSetShowAddEvent,
+  onConnectAccount 
 }: CalendarWidgetProps) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,7 +67,8 @@ export default function CalendarWidget({
       console.log('Token refresh result:', refreshData);
       
       if (!refreshData.success && refreshData.redirectUrl) {
-        window.location.href = refreshData.redirectUrl;
+        // Instead of direct redirect, set error message so parent component can handle this
+        setError('Calendar authentication required. Please connect your Google account to use this feature.');
         return;
       }
       
@@ -74,6 +77,10 @@ export default function CalendarWidget({
       const response = await fetch('/api/calendar/events');
       
       if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          setError('Authentication required. Please connect your Google account to use the calendar feature.');
+          return;
+        }
         console.error('Calendar API error:', response.status, response.statusText);
         throw new Error(`Failed to fetch calendar events: ${response.status}`);
       }
@@ -212,9 +219,9 @@ export default function CalendarWidget({
       .then(response => response.json())
       .then(data => {
         console.log('Token refresh on mount:', data);
-        // Only reload if we need to redirect
-        if (!data.success && data.redirectUrl) {
-          window.location.href = data.redirectUrl;
+        // Don't redirect automatically, just set an error message if needed
+        if (!data.success) {
+          setError('Calendar authentication required. Please connect your Google account to use this feature.');
         }
       })
       .catch(err => {
@@ -609,17 +616,25 @@ export default function CalendarWidget({
                 Retry
               </button>
               <button
-                onClick={async () => {
-                  try {
-                    await refreshCalendarEvents();
-                  } catch (e) {
-                    // If refresh fails, redirect to auth
-                    window.location.href = '/api/gmail/auth?force_refresh=true&calendar=true';
+                onClick={() => {
+                  const cookies = document.cookie.split(';').map(c => c.trim());
+                  const isGmailConnected = cookies.some(c => c.startsWith('gmail_connected=true'));
+                  
+                  // Only redirect to auth if Gmail isn't connected
+                  if (!isGmailConnected) {
+                    if (onConnectAccount) {
+                      onConnectAccount();
+                    } else {
+                      window.location.href = '/api/gmail/auth';
+                    }
+                  } else {
+                    // Just retry if Gmail is connected but calendar isn't
+                    refreshCalendarEvents();
                   }
                 }}
                 className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded transition-colors"
               >
-                Reconnect Calendar
+                Connect Google Account
               </button>
             </div>
           </div>
@@ -889,7 +904,7 @@ export default function CalendarWidget({
         </div>
       ) : error ? (
         <div className="flex flex-col items-center justify-center flex-1 text-center">
-          <p className="text-zinc-400 text-sm mb-2">{error}</p>
+          <p className="text-zinc-400 text-sm mb-4">Calendar authentication required. Please connect your Google account to use this feature.</p>
           <div className="flex space-x-2">
             <button
               onClick={refreshCalendarEvents}
@@ -898,17 +913,14 @@ export default function CalendarWidget({
               Retry
             </button>
             <button
-              onClick={async () => {
-                try {
-                  await refreshCalendarEvents();
-                } catch (e) {
-                  // If refresh fails, redirect to auth
-                  window.location.href = '/api/gmail/auth?force_refresh=true&calendar=true';
+              onClick={() => {
+                if (onConnectAccount) {
+                  onConnectAccount();
                 }
               }}
               className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded transition-colors"
             >
-              Reconnect Calendar
+              Connect Google Account
             </button>
           </div>
         </div>

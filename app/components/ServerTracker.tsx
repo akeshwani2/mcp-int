@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Server } from 'lucide-react'
+import { Server, Plus } from 'lucide-react'
 import { useCoAgent } from '@copilotkit/react-core'
 
 interface AgentState {
@@ -21,7 +21,11 @@ interface MCPServerFromDB {
   lastUsed: string | null
 }
 
-export function ServerTracker() {
+interface ServerTrackerProps {
+  onConfigClick: () => void
+}
+
+export function ServerTracker({ onConfigClick }: ServerTrackerProps) {
   const [serverCount, setServerCount] = useState(0)
   const { state: agentState, setState: setAgentState } = useCoAgent<AgentState>({
     name: 'sample_agent',
@@ -68,10 +72,23 @@ export function ServerTracker() {
   }, [])
 
   return (
-    <div className="flex items-center bg-black/50 border border-white/10 rounded-full py-1 px-3 text-sm">
-      <Server size={14} className="mr-2" />
-      <span>{serverCount}</span>
-      <span className="ml-1 text-white/60">servers</span>
-    </div>
+    <button 
+      onClick={onConfigClick}
+      className="hover:scale-105 transition-all duration-300 rounded-full cursor-pointer"
+      aria-label="Open server configuration"
+    >
+      {serverCount > 0 ? (
+        <div className="flex items-center bg-black/50 border border-white/10 rounded-full py-1 px-3 text-sm hover:bg-black/70">
+          <Server size={14} className="mr-2" />
+          <span>{serverCount}</span>
+          <span className="ml-1 text-white/60">servers</span>
+        </div>
+      ) : (
+        <div className="flex items-center bg-black/50 border border-white/10 rounded-full py-1 px-3 text-sm hover:bg-black/70">
+          <Plus size={14} className="mr-2" />
+          <span className="text-white/60">Add Servers</span>
+        </div>
+      )}
+    </button>
   )
 } 

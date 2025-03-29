@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import EmailSummaryDashboard from '../components/EmailSummaryDashboard';
+import { ServerTracker } from '../components/ServerTracker';
+import { MCPConfigForm } from '../components/MCPConfigForm';
+import { X } from 'lucide-react';
 
 const EmailPage = () => {
   const [configOpen, setConfigOpen] = useState(false);
@@ -47,15 +50,14 @@ const EmailPage = () => {
   return (
     <div className="min-h-screen bg-black text-white flex">
       {/* Sidebar */}
-      <Sidebar 
-        onNavigate={() => {}}
-        onConfigClick={() => setConfigOpen(!configOpen)}
-        activeView="email"
-      />
+      <Sidebar />
 
       {/* Main Content */}
       <div className="flex-1 ml-16 p-6">
-        {/* <h1 className="text-2xl font-bold mb-4">Email</h1> */}
+        {/* Server tracker in top right corner */}
+        <div className="absolute top-4 right-4 z-10">
+          <ServerTracker onConfigClick={() => setConfigOpen(true)} />
+        </div>
         
         <div className="w-full">
           {gmailTokens ? (
@@ -86,6 +88,24 @@ const EmailPage = () => {
           )}
         </div>
       </div>
+
+      {/* Server config panel - Modal dialog */}
+      {configOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+          <div className="relative w-full max-w-4xl h-[90vh] bg-black border border-white/10 rounded-lg shadow-xl overflow-hidden">
+            <button
+              onClick={() => setConfigOpen(false)}
+              className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-white/10 transition-colors z-10"
+              aria-label="Close config"
+            >
+              <X size={20} />
+            </button>
+            <div className="h-full overflow-auto">
+              <MCPConfigForm />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

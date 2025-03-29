@@ -99,20 +99,16 @@ export default function Home() {
 
   return (
     <div className="h-screen overflow-hidden bg-black text-white flex relative">
-      {/* Client component that sets up the Copilot action handler */}
       <CopilotActionHandler />
 
       {/* Pill-shaped sidebar */}
-      <Sidebar 
-        onNavigate={handleNavigation} 
-        onConfigClick={() => setIsConfigOpen(true)}
-      />
+      <Sidebar />
 
       {/* Main content area - Now full width for chat */}
       <div className="flex-1 p-4 md:p-8 flex flex-col overflow-hidden">
         {/* Server tracker and Gmail status indicator */}
         <div className="absolute top-4 right-4 z-10 flex items-center space-x-2">
-          <div className="flex items-center">
+          {/* <div className="flex items-center">
             {gmailTokens ? (
               <div className="flex items-center bg-zinc-900 rounded-full px-2 py-0.5 border border-zinc-800">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1.5"></span>
@@ -144,8 +140,8 @@ export default function Home() {
                 </button>
               </div>
             )}
-          </div>
-          <ServerTracker />
+          </div> */}
+          <ServerTracker onConfigClick={() => setIsConfigOpen(true)} />
         </div>
         
         {/* Chat UI takes the full area */}

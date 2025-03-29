@@ -225,7 +225,7 @@ export function CustomChatUI({
   return (
     <div className="flex flex-col h-full relative overflow-hidden">
       {/* Header with Title Only */}
-      <div className="flex justify-between items-center py-2 border-b border-zinc-800">
+      <div className="flex justify-between items-center py-2">
         <div className="flex items-center">
           <h2 className="text-lg font-light mr-4">{labels.title}</h2>
         </div>
@@ -257,11 +257,11 @@ export function CustomChatUI({
       <div className="flex-1 overflow-y-auto p-4 overflow-x-hidden">
         {visibleMessages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 mb-6 flex items-center justify-center">
+            {/* <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 mb-6 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
-            </div>
+            </div> */}
             <h3 className="text-xl font-medium mb-2">{labels.initial}</h3>
             <p className="text-zinc-400 text-center max-w-md mb-8">I can help you manage emails, schedule events, track tasks, and more.</p>
             
@@ -339,39 +339,42 @@ export function CustomChatUI({
       </div>
 
       {/* Input area */}
-      <div className="p-4 border-t border-zinc-800 relative">
-        <div className="flex items-center rounded-xl bg-zinc-800 relative pr-12">
+      <div className="p-4 relative">
+        <div className="flex gap-2 items-center relative pr-12">
           <textarea
             ref={inputRef}
             value={inputValue}
             onChange={autoResizeTextarea}
             onKeyDown={handleKeyDown}
             placeholder={labels.placeholder}
-            className="w-full bg-transparent border-0 outline-none text-white p-3 resize-none overflow-hidden scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent max-h-32"
+            className="w-full bg-transparent border-0 outline-none text-white p-3 resize-none overflow-hidden scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent max-h-32 rounded-xl"
             rows={1}
           />
-          <button
-            onClick={sendMessage}
-            disabled={isLoading || !inputValue.trim()}
-            className={`absolute right-3 p-2 rounded-full ${
-              isLoading || !inputValue.trim()
-                ? "text-zinc-500"
-                : "text-white bg-blue-600 hover:bg-blue-700"
-            } transition-colors duration-300`}
-            aria-label="Send message"
-          >
-            {isLoading ? (
-              <StopCircle
-                size={20}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  stopGeneration();
-                }}
-              />
-            ) : (
-              <ArrowUp size={20} />
-            )}
-          </button>
+          {isLoading ? (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                stopGeneration();
+              }}
+              className="p-2 rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors duration-300"
+              aria-label="Stop generation"
+            >
+              <StopCircle size={26} />
+            </button>
+          ) : (
+            <button
+              onClick={sendMessage}
+              disabled={!inputValue.trim()}
+              className={`p-2 rounded-xl ${
+                !inputValue.trim()
+                  ? "bg-zinc-900 text-zinc-600 pointer-events-none"
+                  : "text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
+              } transition-colors duration-300`}
+              aria-label="Send message"
+            >
+              <ArrowUp size={26} />
+            </button>
+          )}
         </div>
       </div>
     </div>

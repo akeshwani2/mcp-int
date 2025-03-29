@@ -1,23 +1,13 @@
 "use client";
 
 import React from "react";
-import { MessageCircle, Store, File, Server, Mail, Calendar, CheckSquare } from "lucide-react";
+import { MessageCircle, Store, File, Mail, Calendar, CheckSquare } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-interface SidebarProps {
-  onNavigate?: (page: string) => void;
-  onConfigClick?: () => void;
-  setActiveView?: (view: string) => void;
-  activeView?: string;
-}
+interface SidebarProps {}
 
-export const Sidebar: React.FC<SidebarProps> = ({ 
-  onNavigate = () => {}, 
-  onConfigClick = () => {},
-  setActiveView = () => {},
-  activeView = "chat"
-}) => {
+export const Sidebar: React.FC<SidebarProps> = () => {
   const pathname = usePathname();
   
   return (
@@ -59,7 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
       </Link>
 
-      <Link href="/tasks">
+      {/* <Link href="/tasks">
         <button
           className={`p-2 cursor-pointer hover:scale-105 hover:text-white hover:bg-white/10 rounded-full mb-4 transition-all duration-300 ${
             pathname === "/tasks" ? "text-white bg-red-500" : "text-white/70"
@@ -68,7 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         >
           <CheckSquare size={20} />
         </button>
-      </Link>
+      </Link> */}
       
       <Link href="/marketplace">
         <button
@@ -80,14 +70,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Store size={20} />
         </button>
       </Link>
-
-      <button
-        onClick={onConfigClick}
-        className="p-2 cursor-pointer hover:scale-105 hover:text-white hover:bg-white/10 rounded-full transition-all duration-300 text-white/70"
-        aria-label="Server Configuration"
-      >
-        <Server size={20} />
-      </button>
     </div>
   );
 };

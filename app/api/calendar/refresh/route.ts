@@ -17,6 +17,8 @@ export async function GET() {
     if (!tokensCookie) {
       return NextResponse.json({ 
         success: false, 
+        message: 'No authentication tokens found',
+        status: 'needs_gmail_auth',
         redirectUrl: '/api/gmail/auth?calendar=true&write=true' 
       });
     }
@@ -29,6 +31,8 @@ export async function GET() {
       console.error('Failed to parse token cookie:', e);
       return NextResponse.json({ 
         success: false, 
+        message: 'Invalid token format',
+        status: 'invalid_token',
         redirectUrl: '/api/gmail/auth?calendar=true&write=true' 
       });
     }
@@ -41,6 +45,8 @@ export async function GET() {
     if (!hasReadAccess) {
       return NextResponse.json({ 
         success: false, 
+        message: 'Calendar read access not granted',
+        status: 'needs_calendar_access',
         redirectUrl: '/api/gmail/auth?calendar=true'
       });
     }
@@ -48,7 +54,8 @@ export async function GET() {
     if (!hasWriteAccess) {
       return NextResponse.json({
         success: false,
-        error: 'No calendar write access',
+        message: 'Calendar write access not granted',
+        status: 'needs_calendar_write',
         redirectUrl: '/api/gmail/auth?calendar=true&write=true&force_refresh=true'
       });
     }
