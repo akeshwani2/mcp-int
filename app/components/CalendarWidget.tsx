@@ -535,12 +535,12 @@ export default function CalendarWidget({
             {dayEvents.slice(0, 2).map(event => {
               // Check if the event has a virtual meeting
               const meetingInfo = getMeetingType(event);
-              const meetingIcon = meetingInfo ? 
-                (meetingInfo.type === 'meet' ? '🎦 ' : '👥 ') : '';
+              // const meetingIcon = meetingInfo ? 
+              //   (meetingInfo.type === 'meet' ? '🎦 ' : '👥 ') : '';
 
               return (
                 <div key={event.id} className={`text-xs ${meetingInfo ? 'bg-indigo-900/40 text-indigo-300' : 'bg-blue-900/30 text-blue-300'} px-1 py-0.5 rounded truncate`}>
-                  {formatTime(event.start_time)} {meetingIcon}{event.title}
+                  {formatTime(event.start_time)} {event.title}
                 </div>
               );
             })}
@@ -665,9 +665,9 @@ export default function CalendarWidget({
                       >
                         <div className="flex justify-between items-start">
                           <h5 className="font-medium text-white text-sm mb-1">
-                            {isVirtualMeeting && (
+                            {/* {isVirtualMeeting && (
                               <span className="mr-1">{meetingInfo.type === 'meet' ? '🎦' : '👥'}</span>
-                            )}
+                            )} */}
                             {event.title}
                           </h5>
                           {event.htmlLink && (
@@ -948,9 +948,9 @@ export default function CalendarWidget({
                       >
                         <div className="flex justify-between items-start">
                           <h5 className="font-medium text-white text-sm mb-1">
-                            {isVirtualMeeting && (
+                            {/* {isVirtualMeeting && (
                               <span className="mr-1">{meetingInfo.type === 'meet' ? '🎦' : '👥'}</span>
-                            )}
+                            )} */}
                             {event.title}
                           </h5>
                           {event.htmlLink && (

@@ -344,9 +344,13 @@ export default function EmailSummaryDashboard({ tokens }: EmailSummaryDashboardP
       className="w-full max-w-6xl mx-auto opacity-0 animate-fadeIn"
       style={{ animation: 'fadeIn 0.5s forwards' }}
     >
-      <h3 className="text-xl tracking-tight font-medium text-white mb-4">
+      <div className='text-center justify-center flex flex-col items-center mb-36'>
+      <h3 className="text-xl tracking-tight font-medium text-white">
         Your Email & Meeting Summary
       </h3>
+      <p className='text-zinc-400 text-sm'>View your important emails and meetings</p>
+      </div>
+
       
       {/* Calendar Access Section */}
       {parsedTokens && !hasCalendarPermission && (
@@ -462,7 +466,7 @@ export default function EmailSummaryDashboard({ tokens }: EmailSummaryDashboardP
         
         {/* Calendar Widget */}
         {parsedTokens && (
-          <div className="lg:row-span-1 relative">
+          <div className="lg:row-span-1 relative h-[500px]">
             <CalendarWidget tokens={tokens} variant="compact" />
             {/* <div className="absolute top-4 right-4">
               <button 

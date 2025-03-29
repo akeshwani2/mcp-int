@@ -3,12 +3,9 @@
 import { useCopilotChat, UseCopilotChatOptions } from "@copilotkit/react-core";
 import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
 import { useState, useRef, useEffect } from "react";
-import { ArrowUp, StopCircle, Calendar, CheckSquare, Mail, Clock, Menu, X } from "lucide-react";
+import { ArrowUp, StopCircle, Calendar, CheckSquare, Mail, Clock } from "lucide-react";
 import { Markdown } from "@copilotkit/react-ui";
 import { ToolCallRenderer } from "./ToolCallRenderer";
-import EmailSummaryDashboard from "./EmailSummaryDashboard";
-import CalendarWidget from "./CalendarWidget";
-import TasksWidget from "./TasksWidget";
 
 interface CustomChatUIProps {
   instructions: string;
@@ -18,8 +15,6 @@ interface CustomChatUIProps {
     placeholder: string;
   };
   tokens?: string | null;
-  activeView?: string;
-  setActiveView?: (view: string) => void;
 }
 
 // Add this to eslint.config.mjs to suppress any type errors
@@ -70,8 +65,6 @@ export function CustomChatUI({
     placeholder: "Ask me anything...",
   },
   tokens,
-  activeView = "chat",
-  setActiveView = () => {},
 }: CustomChatUIProps) {
   const {
     visibleMessages,
@@ -88,8 +81,6 @@ export function CustomChatUI({
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState<string | null>(null);
 
   const sendMessage = () => {
     if (inputValue.trim() && !isLoading) {
@@ -262,176 +253,127 @@ export function CustomChatUI({
         </div>
       </div>
 
-      {/* Remove Mobile Menu since navigation is now in sidebar */}
-
-      {/* Content Area - Changes based on active view */}
+      {/* Content Area - Chat View */}
       <div className="flex-1 overflow-y-auto p-4 overflow-x-hidden">
-        {activeView === "chat" && (
-          <>
-            {visibleMessages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 mb-6 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                  </svg>
-                </div>
-                <h3 className="text-xl font-medium mb-2">{labels.initial}</h3>
-                <p className="text-zinc-400 text-center max-w-md mb-8">I can help you manage emails, schedule events, track tasks, and more.</p>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl w-full">
-                  <button 
-                    onClick={() => handleQuickAction("schedule")}
-                    className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
-                  >
-                    <Calendar size={18} className="text-blue-400" />
-                    <span>Schedule a meeting</span>
-                  </button>
-                  
-                  <button 
-                    onClick={() => handleQuickAction("summarize")}
-                    className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
-                  >
-                    <Mail size={18} className="text-purple-400" />
-                    <span>Summarize my emails</span>
-                  </button>
-                  
-                  <button 
-                    onClick={() => handleQuickAction("reminder")}
-                    className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
-                  >
-                    <Clock size={18} className="text-green-400" />
-                    <span>Set a reminder</span>
-                  </button>
-                  
-                  <button 
-                    onClick={() => handleQuickAction("tasks")}
-                    className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
-                  >
-                    <CheckSquare size={18} className="text-amber-400" />
-                    <span>Manage my tasks</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6 w-full">
-                {visibleMessages.map((message, index) => {
-                  // Cast message to ChatMessage type to fix TypeScript errors
-                  const msg = message as ChatMessage;
-                  
-                  // Check if it's a tool call message
-                  const isToolCall = 
-                    msg.__typename === "ActionExecutionMessage" || 
-                    (typeof msg.id === 'string' && msg.id.includes('call_')) ||
-                    msg.__typename === "ResultMessage" || 
-                    (typeof msg.id === 'string' && msg.id.includes('result_')) ||
-                    msg.toolCalls || 
-                    (msg.name && msg.args && msg.status);
-                  
-                  if (isToolCall) {
-                    // Render tool calls directly
-                    return (
-                      <div key={index} className="my-2">
-                        {renderMessage(msg)}
-                      </div>
-                    );
-                  }
-                  
-                  // Render user and assistant messages
-                  const isUser = msg.role === Role.User;
-                  return (
-                    <div key={index} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`rounded-xl py-2 px-3 max-w-4xl ${isUser ? 'bg-blue-600 text-white' : 'bg-zinc-800 text-white'}`}>
-                        {renderMessage(msg)}
-                      </div>
-                    </div>
-                  );
-                })}
-                <div ref={messagesEndRef} />
-              </div>
-            )}
-          </>
-        )}
-        
-        {activeView === "email" && (
-          <div className="w-full h-full">
-            {tokens ? (
-              <EmailSummaryDashboard tokens={tokens} />
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full">
-                <div className="bg-purple-500/20 p-4 rounded-full mb-4">
-                  <Mail size={32} className="text-purple-400" />
-                </div>
-                <h3 className="text-xl font-medium mb-2">Connect Your Email</h3>
-                <p className="text-zinc-400 text-center max-w-md mb-6">
-                  Connect your Gmail account to let me help you manage your inbox.
-                </p>
-                <button 
-                  onClick={() => {
-                    appendMessage(
-                      new TextMessage({ content: "I want to connect my Gmail account", role: Role.User })
-                    );
-                    setActiveView("chat");
-                  }}
-                  className="px-4 py-2 bg-purple-600 rounded-md hover:bg-purple-700 transition-colors"
-                >
-                  Connect Gmail
-                </button>
-              </div>
-            )}
+        {visibleMessages.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 mb-6 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <h3 className="text-xl font-medium mb-2">{labels.initial}</h3>
+            <p className="text-zinc-400 text-center max-w-md mb-8">I can help you manage emails, schedule events, track tasks, and more.</p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl w-full">
+              <button 
+                onClick={() => handleQuickAction("schedule")}
+                className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
+              >
+                <Calendar size={18} className="text-blue-400" />
+                <span>Schedule a meeting</span>
+              </button>
+              
+              <button 
+                onClick={() => handleQuickAction("summarize")}
+                className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
+              >
+                <Mail size={18} className="text-purple-400" />
+                <span>Summarize my emails</span>
+              </button>
+              
+              <button 
+                onClick={() => handleQuickAction("reminder")}
+                className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
+              >
+                <Clock size={18} className="text-green-400" />
+                <span>Set a reminder</span>
+              </button>
+              
+              <button 
+                onClick={() => handleQuickAction("tasks")}
+                className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
+              >
+                <CheckSquare size={18} className="text-amber-400" />
+                <span>Manage my tasks</span>
+              </button>
+            </div>
           </div>
-        )}
-        
-        {activeView === "calendar" && (
-          <div className="w-full h-full">
-            <CalendarWidget tokens={tokens} variant="full" />
-          </div>
-        )}
-        
-        {activeView === "tasks" && (
-          <div className="w-full h-full">
-            <TasksWidget />
+        ) : (
+          <div className="space-y-6 w-full">
+            {visibleMessages.map((message, index) => {
+              // Cast message to ChatMessage type to fix TypeScript errors
+              const msg = message as ChatMessage;
+              
+              // Check if it's a tool call message
+              const isToolCall = 
+                msg.__typename === "ActionExecutionMessage" || 
+                (typeof msg.id === 'string' && msg.id.includes('call_')) ||
+                msg.__typename === "ResultMessage" || 
+                (typeof msg.id === 'string' && msg.id.includes('result_')) ||
+                msg.toolCalls || 
+                (msg.name && msg.args && msg.status);
+              
+              if (isToolCall) {
+                // Render tool calls directly
+                return (
+                  <div key={index} className="my-2">
+                    {renderMessage(msg)}
+                  </div>
+                );
+              }
+              
+              // Render user and assistant messages
+              const isUser = msg.role === Role.User;
+              return (
+                <div key={index} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`rounded-xl py-2 px-3 max-w-4xl ${isUser ? 'bg-blue-600 text-white' : 'bg-zinc-800 text-white'}`}>
+                    {renderMessage(msg)}
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={messagesEndRef} />
           </div>
         )}
       </div>
 
-      {/* Input area - Only show in chat view */}
-      {activeView === "chat" && (
-        <div className="p-4 border-t border-zinc-800 relative">
-          <div className="flex items-center rounded-xl bg-zinc-800 relative pr-12">
-            <textarea
-              ref={inputRef}
-              value={inputValue}
-              onChange={autoResizeTextarea}
-              onKeyDown={handleKeyDown}
-              placeholder={labels.placeholder}
-              className="w-full bg-transparent border-0 outline-none text-white p-3 resize-none overflow-hidden scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent max-h-32"
-              rows={1}
-            />
-            <button
-              onClick={sendMessage}
-              disabled={isLoading || !inputValue.trim()}
-              className={`absolute right-3 p-2 rounded-full ${
-                isLoading || !inputValue.trim()
-                  ? "text-zinc-500"
-                  : "text-white bg-blue-600 hover:bg-blue-700"
-              } transition-colors duration-300`}
-              aria-label="Send message"
-            >
-              {isLoading ? (
-                <StopCircle
-                  size={20}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    stopGeneration();
-                  }}
-                />
-              ) : (
-                <ArrowUp size={20} />
-              )}
-            </button>
-          </div>
+      {/* Input area */}
+      <div className="p-4 border-t border-zinc-800 relative">
+        <div className="flex items-center rounded-xl bg-zinc-800 relative pr-12">
+          <textarea
+            ref={inputRef}
+            value={inputValue}
+            onChange={autoResizeTextarea}
+            onKeyDown={handleKeyDown}
+            placeholder={labels.placeholder}
+            className="w-full bg-transparent border-0 outline-none text-white p-3 resize-none overflow-hidden scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent max-h-32"
+            rows={1}
+          />
+          <button
+            onClick={sendMessage}
+            disabled={isLoading || !inputValue.trim()}
+            className={`absolute right-3 p-2 rounded-full ${
+              isLoading || !inputValue.trim()
+                ? "text-zinc-500"
+                : "text-white bg-blue-600 hover:bg-blue-700"
+            } transition-colors duration-300`}
+            aria-label="Send message"
+          >
+            {isLoading ? (
+              <StopCircle
+                size={20}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  stopGeneration();
+                }}
+              />
+            ) : (
+              <ArrowUp size={20} />
+            )}
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }

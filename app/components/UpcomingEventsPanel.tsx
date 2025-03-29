@@ -51,10 +51,11 @@ const UpcomingEventsPanel = ({ onAddEventClick }: UpcomingEventsPanelProps) => {
     } else if (date.toDateString() === tomorrow.toDateString()) {
       return 'Tomorrow';
     } else {
+      // Use a consistent format for all other dates
       return date.toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        month: 'short', 
-        day: 'numeric' 
+        weekday: 'long',
+        month: 'long', 
+        day: 'numeric'
       });
     }
   };
@@ -164,13 +165,17 @@ const UpcomingEventsPanel = ({ onAddEventClick }: UpcomingEventsPanelProps) => {
           a.start_time.getTime() - b.start_time.getTime()
         );
         
-        // Only show upcoming events (today and future)
+        // Get current date with time set to midnight
         const now = new Date();
         now.setHours(0, 0, 0, 0);
         
+        // Show all upcoming events (events that haven't ended yet)
         const upcomingEvents = sortedEvents.filter((event: CalendarEvent) => 
-          event.start_time >= now || event.end_time >= now
+          event.end_time >= now
         );
+        
+        // Log the number of upcoming events
+        console.log(`Found ${upcomingEvents.length} upcoming events`);
         
         setEvents(upcomingEvents);
       } else {
@@ -204,6 +209,14 @@ const UpcomingEventsPanel = ({ onAddEventClick }: UpcomingEventsPanelProps) => {
     return grouped;
   };
 
+  // Helper to check if a date is today
+  const isToday = (date: Date): boolean => {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+           date.getMonth() === today.getMonth() &&
+           date.getFullYear() === today.getFullYear();
+  };
+
   // Load events on component mount
   useEffect(() => {
     fetchCalendarEvents();
@@ -213,7 +226,7 @@ const UpcomingEventsPanel = ({ onAddEventClick }: UpcomingEventsPanelProps) => {
 
   return (
     <div className="bg-zinc-900 rounded-xl p-5 border border-zinc-800 h-full">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-2">
         <h2 className="text-md font-medium flex items-center">
           <Calendar className="w-5 h-5 mr-2" />
           Upcoming Events
@@ -236,6 +249,12 @@ const UpcomingEventsPanel = ({ onAddEventClick }: UpcomingEventsPanelProps) => {
           )}
         </div>
       </div>
+      
+      {events.length > 0 && !isLoading && !error && (
+        <p className="text-xs text-zinc-500 mb-3">
+          Showing all upcoming calendar events. Scroll to see more.
+        </p>
+      )}
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-8">
@@ -269,79 +288,89 @@ const UpcomingEventsPanel = ({ onAddEventClick }: UpcomingEventsPanelProps) => {
           </a>
         </div>
       ) : (
-        <div className="space-y-6 overflow-y-auto h-[350px] pr-1">
-          {Object.keys(groupedEvents).map(dateKey => (
-            <div key={dateKey}>
-              <div className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">
-                {formatDate(new Date(dateKey))}
-              </div>
-              
-              <div className="space-y-3">
-                {groupedEvents[dateKey].map(event => {
-                  // Determine if this event has a virtual meeting
-                  const meetingInfo = getMeetingType(event);
-                  const isVirtualMeeting = !!meetingInfo;
-                  
-                  return (
-                    <div 
-                      key={event.id}
-                      className="p-3 rounded-lg bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 transition-colors"
-                    >
-                      <div className="flex justify-between items-start">
-                        <h5 className="font-medium text-white text-sm mb-1">
-                          {isVirtualMeeting && (
-                            <span className="mr-1">{meetingInfo.type === 'meet' ? '🎦' : '👥'}</span>
+        <div className="space-y-6 overflow-y-auto h-[500px] pr-1">
+          {Object.keys(groupedEvents).map(dateKey => {
+            const date = new Date(dateKey);
+            const todayDate = isToday(date);
+            
+            return (
+              <div key={dateKey} className={`${todayDate ? 'pb-4' : ''}`}>
+                <div className="flex items-center text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">
+                  <span>{formatDate(date)}</span>
+                  {todayDate && (
+                    <span className="ml-2 px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded text-[10px]">
+                      TODAY
+                    </span>
+                  )}
+                </div>
+                
+                <div className={`space-y-3 ${todayDate ? 'pl-1 border-l-2 border-blue-500/40' : ''}`}>
+                  {groupedEvents[dateKey].map(event => {
+                    // Determine if this event has a virtual meeting
+                    const meetingInfo = getMeetingType(event);
+                    const isVirtualMeeting = !!meetingInfo;
+                    
+                    return (
+                      <div 
+                        key={event.id}
+                        className="p-3 rounded-lg bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 transition-colors"
+                      >
+                        <div className="flex justify-between items-start">
+                          <h5 className="font-medium text-white text-sm mb-1">
+                            {/* {isVirtualMeeting && (
+                              <span className="mr-1">{meetingInfo.type === 'meet' ? '🎦' : '👥'}</span>
+                            )} */}
+                            {event.title}
+                          </h5>
+                          {event.htmlLink && (
+                            <a href={event.htmlLink} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-zinc-300">
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
                           )}
-                          {event.title}
-                        </h5>
-                        {event.htmlLink && (
-                          <a href={event.htmlLink} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-zinc-300">
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        )}
-                      </div>
-                      
-                      <div className="text-xs text-zinc-400 space-y-1.5">
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="w-3 h-3" />
-                          <span>
-                            {formatTime(event.start_time)} - {formatTime(event.end_time)}
-                          </span>
                         </div>
                         
-                        {isVirtualMeeting ? (
+                        <div className="text-xs text-zinc-400 space-y-1.5">
                           <div className="flex items-center gap-1.5">
-                            <MapPin className="w-3 h-3" />
-                            <a 
-                              href={meetingInfo.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-400 hover:underline flex items-center"
-                            >
-                              {meetingInfo.type === 'meet' ? 'Google Meet' : 'Zoom'} Meeting
-                              <ExternalLink className="w-3 h-3 ml-1" />
-                            </a>
+                            <Clock className="w-3 h-3" />
+                            <span>
+                              {formatTime(event.start_time)} - {formatTime(event.end_time)}
+                            </span>
                           </div>
-                        ) : event.location ? (
-                          <div className="flex items-center gap-1.5">
-                            <MapPin className="w-3 h-3" />
-                            <span>{event.location}</span>
-                          </div>
-                        ) : null}
-                        
-                        {event.attendees && event.attendees.length > 0 && (
-                          <div className="flex items-center gap-1.5">
-                            <Users className="w-3 h-3" />
-                            <span>{event.attendees.length} attendees</span>
-                          </div>
-                        )}
+                          
+                          {isVirtualMeeting ? (
+                            <div className="flex items-center gap-1.5">
+                              <MapPin className="w-3 h-3" />
+                              <a 
+                                href={meetingInfo.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:underline flex items-center"
+                              >
+                                {meetingInfo.type === 'meet' ? 'Google Meet' : 'Zoom'} Meeting
+                                <ExternalLink className="w-3 h-3 ml-1" />
+                              </a>
+                            </div>
+                          ) : event.location ? (
+                            <div className="flex items-center gap-1.5">
+                              <MapPin className="w-3 h-3" />
+                              <span>{event.location}</span>
+                            </div>
+                          ) : null}
+                          
+                          {event.attendees && event.attendees.length > 0 && (
+                            <div className="flex items-center gap-1.5">
+                              <Users className="w-3 h-3" />
+                              <span>{event.attendees.length} attendees</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

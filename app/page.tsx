@@ -11,7 +11,6 @@ import { CustomChatUI } from "./components/CustomChatUI";
 export default function Home() {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState("home");
-  const [activeView, setActiveView] = useState("chat");
   const [gmailTokens, setGmailTokens] = useState<string | null>(null);
   const [assistantPreferences, setAssistantPreferences] = useState({
     emailEnabled: false,
@@ -103,12 +102,10 @@ export default function Home() {
       {/* Client component that sets up the Copilot action handler */}
       <CopilotActionHandler />
 
-      {/* Pill-shaped sidebar - Now with activeView state */}
+      {/* Pill-shaped sidebar */}
       <Sidebar 
         onNavigate={handleNavigation} 
-        onConfigClick={() => setIsConfigOpen(true)} 
-        setActiveView={setActiveView}
-        activeView={activeView}
+        onConfigClick={() => setIsConfigOpen(true)}
       />
 
       {/* Main content area - Now full width for chat */}
@@ -151,7 +148,7 @@ export default function Home() {
           <ServerTracker />
         </div>
         
-        {/* Chat UI takes the full area - Pass activeView */}
+        {/* Chat UI takes the full area */}
         <div className="w-full flex-1 max-w-6xl mx-auto overflow-hidden">
           <CustomChatUI
             instructions={`You are Echo, a helpful and versatile personal assistant. You help the user manage their email, calendar, tasks, and answer questions.
@@ -170,8 +167,6 @@ Be concise but friendly in your responses. If a service isn't enabled yet, guide
               placeholder: "Ask Echo anything...",
             }}
             tokens={gmailTokens}
-            activeView={activeView}
-            setActiveView={setActiveView}
           />
         </div>
       </div>
