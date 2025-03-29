@@ -17,12 +17,20 @@ interface CalendarEvent {
 interface CalendarWidgetProps {
   tokens?: string | null;
   variant?: 'compact' | 'full'; // compact for email dashboard, full for calendar tab
+  showAddEvent?: boolean;
+  setShowAddEvent?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function CalendarWidget({ tokens, variant = 'compact' }: CalendarWidgetProps) {
+export default function CalendarWidget({ 
+  tokens, 
+  variant = 'compact', 
+  showAddEvent: externalShowAddEvent,
+  setShowAddEvent: externalSetShowAddEvent 
+}: CalendarWidgetProps) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showAddEvent, setShowAddEvent] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [internalShowAddEvent, setInternalShowAddEvent] = useState(false);
   const [newEvent, setNewEvent] = useState<Partial<CalendarEvent>>({
     title: '',
     start_time: new Date(),
@@ -30,6 +38,10 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
   });
   const [currentDate, setCurrentDate] = useState(new Date());
   const [error, setError] = useState<string | null>(null);
+  
+  // Use either external state (if provided) or internal state
+  const showAddEventValue = externalShowAddEvent !== undefined ? externalShowAddEvent : internalShowAddEvent;
+  const setShowAddEventValue = externalSetShowAddEvent || setInternalShowAddEvent;
   
   // Function to refresh calendar data via token refresh if needed
   const refreshCalendarEvents = async () => {
@@ -248,20 +260,69 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
     .slice(0, 5);
   
   // Add a new event (placeholder for now - would connect to calendar API)
-  const addEvent = () => {
+  const addEvent = async () => {
     if (!newEvent.title || !newEvent.start_time || !newEvent.end_time) {
       return;
     }
     
-    // In a real implementation, we would send a POST request to create the event
-    alert('Creating events will be implemented with the Calendar API');
+    setIsSaving(true);
     
-    setShowAddEvent(false);
-    setNewEvent({
-      title: '',
-      start_time: new Date(),
-      end_time: new Date(new Date().getTime() + 60 * 60 * 1000),
-    });
+    try {
+      // Format the dates for the API
+      const formattedEvent = {
+        summary: newEvent.title,
+        location: newEvent.location || '',
+        description: newEvent.description || '',
+        start: {
+          dateTime: newEvent.start_time.toISOString(),
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        end: {
+          dateTime: newEvent.end_time.toISOString(),
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        }
+      };
+      
+      // Call the API to create the event
+      const response = await fetch('/api/calendar/create-event', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formattedEvent)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Check if we need to redirect for authentication
+        if (errorData.redirectUrl) {
+          window.location.href = errorData.redirectUrl;
+          return;
+        }
+        
+        throw new Error(errorData.error || `Failed to create event: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Event created:', data);
+      
+      // Refresh events to show the new one
+      await refreshCalendarEvents();
+      
+      // Close modal and reset form
+      setShowAddEventValue(false);
+      setNewEvent({
+        title: '',
+        start_time: new Date(),
+        end_time: new Date(new Date().getTime() + 60 * 60 * 1000),
+      });
+    } catch (error) {
+      console.error('Error creating event:', error);
+      alert('Could not create the event. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
   
   // Calendar navigation functions for the full view
@@ -325,7 +386,7 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
     
     // Add empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="h-24 p-1 border border-zinc-800 bg-zinc-900/30"></div>);
+      days.push(<div key={`empty-${i}`} className="h-20 p-1 border border-zinc-800 bg-zinc-900/30"></div>);
     }
     
     // Add cells for each day in the month
@@ -340,26 +401,26 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
       days.push(
         <div 
           key={`day-${day}`} 
-          className={`h-24 p-2 border border-zinc-800 transition-colors ${
-            isToday ? 'bg-blue-900/20' : hasEvents ? 'bg-zinc-800/30' : 'bg-zinc-900/30'
+          className={`h-20 p-1 border border-zinc-800 transition-colors overflow-hidden ${
+            isToday ? 'bg-blue-900/20 border-blue-500' : hasEvents ? 'bg-zinc-800/30' : 'bg-zinc-900/30'
           }`}
         >
           <div className="flex justify-between items-start">
-            <span className={`text-sm font-medium ${isToday ? 'bg-blue-500 text-white w-6 h-6 flex items-center justify-center rounded-lg' : ''}`}>
+            <span className={`text-sm font-medium ${isToday ? 'bg-blue-500 text-white w-5 h-5 flex items-center justify-center rounded-full' : ''}`}>
               {day}
             </span>
-            {hasEvents && (
-              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+            {hasEvents && !isToday && (
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
             )}
           </div>
-          <div className="mt-1 space-y-1 overflow-hidden max-h-16">
+          <div className="mt-1 space-y-1 overflow-hidden max-h-14">
             {dayEvents.slice(0, 2).map(event => (
-              <div key={event.id} className="text-xs bg-blue-900/30 text-blue-300 p-1 rounded truncate">
+              <div key={event.id} className="text-xs bg-blue-900/30 text-blue-300 px-1 py-0.5 rounded truncate">
                 {formatTime(event.start_time)} {event.title}
               </div>
             ))}
             {dayEvents.length > 2 && (
-              <div className="text-xs text-zinc-400">+{dayEvents.length - 2} more</div>
+              <div className="text-xs text-zinc-400 text-center">+{dayEvents.length - 2}</div>
             )}
           </div>
         </div>
@@ -369,7 +430,7 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
     return (
       <div className="grid grid-cols-7 gap-1">
         {dayNames.map(day => (
-          <div key={day} className="text-center text-sm font-medium text-zinc-400 p-1">
+          <div key={day} className="text-center text-xs font-medium text-zinc-400 p-1">
             {day}
           </div>
         ))}
@@ -395,7 +456,7 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => setShowAddEvent(true)}
+              onClick={() => setShowAddEventValue(true)}
               className="text-xs bg-zinc-900 hover:bg-zinc-800 text-white px-2 py-1 rounded border border-zinc-700 transition-colors"
             >
               Add Event
@@ -512,7 +573,7 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
         )}
         
         {/* Add Event Modal - Same for both variants */}
-        {showAddEvent && (
+        {showAddEventValue && (
           <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
             <div className="bg-zinc-900 rounded-lg p-5 max-w-md w-full border border-zinc-700">
               <h3 className="text-lg font-medium mb-4">Add New Event</h3>
@@ -526,6 +587,7 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
                     onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
                     className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white"
                     placeholder="Event title"
+                    disabled={isSaving}
                   />
                 </div>
                 
@@ -537,6 +599,7 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
                       value={newEvent.start_time ? new Date(newEvent.start_time.getTime() - newEvent.start_time.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
                       onChange={(e) => setNewEvent({...newEvent, start_time: new Date(e.target.value)})}
                       className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white"
+                      disabled={isSaving}
                     />
                   </div>
                   
@@ -547,6 +610,7 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
                       value={newEvent.end_time ? new Date(newEvent.end_time.getTime() - newEvent.end_time.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
                       onChange={(e) => setNewEvent({...newEvent, end_time: new Date(e.target.value)})}
                       className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white"
+                      disabled={isSaving}
                     />
                   </div>
                 </div>
@@ -559,21 +623,29 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
                     onChange={(e) => setNewEvent({...newEvent, location: e.target.value})}
                     className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white"
                     placeholder="Location (optional)"
+                    disabled={isSaving}
                   />
                 </div>
                 
                 <div className="flex justify-end space-x-3 mt-4">
                   <button
-                    onClick={() => setShowAddEvent(false)}
+                    onClick={() => setShowAddEventValue(false)}
                     className="px-4 py-2 text-zinc-300 hover:text-white"
+                    disabled={isSaving}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={addEvent}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md text-white transition-colors"
+                    className={`px-4 py-2 ${isSaving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} rounded-md text-white transition-colors flex items-center`}
+                    disabled={isSaving}
                   >
-                    Add Event
+                    {isSaving ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Creating...
+                      </>
+                    ) : 'Add Event'}
                   </button>
                 </div>
               </div>
@@ -586,15 +658,15 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
   
   // Render the full calendar view
   return (
-    <div className="bg-black rounded-xl p-5 border border-zinc-800 h-full flex flex-col">
+    <div className="bg-black rounded-xl p-4 border border-zinc-800 h-full flex flex-col overflow-hidden">
       {/* Header with month navigation */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-2">
           <Calendar className="w-5 h-5 text-white" />
           <h4 className="text-lg font-medium text-white">Calendar</h4>
         </div>
         
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
           <div className="flex items-center">
             <button
               onClick={handlePrevMonth}
@@ -625,7 +697,7 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
             </button>
             
             <button
-              onClick={() => setShowAddEvent(true)}
+              onClick={() => setShowAddEventValue(true)}
               className="flex items-center text-xs bg-zinc-900 hover:bg-zinc-800 text-white px-2 py-1 rounded border border-zinc-700 transition-colors"
             >
               <Plus className="w-3.5 h-3.5 mr-1" />
@@ -674,71 +746,73 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
         <div className="overflow-y-auto flex-1">
           {renderCalendarGrid()}
           
-          {/* Upcoming Events Section */}
-          <div className="mt-6">
-            <h3 className="text-base font-medium mb-3">Upcoming Events</h3>
-            {upcomingEvents.length === 0 ? (
-              <div className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-800 text-center">
-                <p className="text-zinc-500 text-sm mb-2">No upcoming events found in your calendar</p>
-                <div className="flex justify-center">
-                  <a 
-                    href="https://calendar.google.com/calendar/u/0/r/week" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-xs text-blue-400 hover:underline"
-                  >
-                    Open Google Calendar
-                  </a>
+          {/* Hide Upcoming Events Section in full variant since we have a dedicated panel */}
+          {variant === 'full' ? null : (
+            <div className="mt-6">
+              <h3 className="text-base font-medium mb-3">Upcoming Events</h3>
+              {upcomingEvents.length === 0 ? (
+                <div className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-800 text-center">
+                  <p className="text-zinc-500 text-sm mb-2">No upcoming events found in your calendar</p>
+                  <div className="flex justify-center">
+                    <a 
+                      href="https://calendar.google.com/calendar/u/0/r/week" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-400 hover:underline"
+                    >
+                      Open Google Calendar
+                    </a>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {upcomingEvents.map(event => (
-                  <div 
-                    key={event.id}
-                    className="p-3 rounded-lg bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 transition-colors"
-                  >
-                    <div className="flex justify-between items-start">
-                      <h5 className="font-medium text-white text-sm mb-1">{event.title}</h5>
-                      {event.htmlLink && (
-                        <a href={event.htmlLink} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-zinc-300">
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      )}
-                    </div>
-                    
-                    <div className="text-xs text-zinc-400 space-y-1">
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="w-3 h-3" />
-                        <span>
-                          {formatDate(event.start_time)} • {formatTime(event.start_time)} - {formatTime(event.end_time)}
-                        </span>
+              ) : (
+                <div className="space-y-3">
+                  {upcomingEvents.map(event => (
+                    <div 
+                      key={event.id}
+                      className="p-3 rounded-lg bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 transition-colors"
+                    >
+                      <div className="flex justify-between items-start">
+                        <h5 className="font-medium text-white text-sm mb-1">{event.title}</h5>
+                        {event.htmlLink && (
+                          <a href={event.htmlLink} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-zinc-300">
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
                       </div>
                       
-                      {event.location && (
+                      <div className="text-xs text-zinc-400 space-y-1">
                         <div className="flex items-center gap-1.5">
-                          <MapPin className="w-3 h-3" />
-                          <span>{event.location}</span>
+                          <Clock className="w-3 h-3" />
+                          <span>
+                            {formatDate(event.start_time)} • {formatTime(event.start_time)} - {formatTime(event.end_time)}
+                          </span>
                         </div>
-                      )}
-                      
-                      {event.attendees && event.attendees.length > 0 && (
-                        <div className="flex items-center gap-1.5">
-                          <Users className="w-3 h-3" />
-                          <span>{Array.isArray(event.attendees) ? event.attendees.length : 0}</span>
-                        </div>
-                      )}
+                        
+                        {event.location && (
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="w-3 h-3" />
+                            <span>{event.location}</span>
+                          </div>
+                        )}
+                        
+                        {event.attendees && event.attendees.length > 0 && (
+                          <div className="flex items-center gap-1.5">
+                            <Users className="w-3 h-3" />
+                            <span>{Array.isArray(event.attendees) ? event.attendees.length : 0}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
       
       {/* Add Event Modal - Same for both variants */}
-      {showAddEvent && (
+      {showAddEventValue && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-zinc-900 rounded-lg p-5 max-w-md w-full border border-zinc-700">
             <h3 className="text-lg font-medium mb-4">Add New Event</h3>
@@ -752,6 +826,7 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
                   onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
                   className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white"
                   placeholder="Event title"
+                  disabled={isSaving}
                 />
               </div>
               
@@ -763,6 +838,7 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
                     value={newEvent.start_time ? new Date(newEvent.start_time.getTime() - newEvent.start_time.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
                     onChange={(e) => setNewEvent({...newEvent, start_time: new Date(e.target.value)})}
                     className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white"
+                    disabled={isSaving}
                   />
                 </div>
                 
@@ -773,6 +849,7 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
                     value={newEvent.end_time ? new Date(newEvent.end_time.getTime() - newEvent.end_time.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
                     onChange={(e) => setNewEvent({...newEvent, end_time: new Date(e.target.value)})}
                     className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white"
+                    disabled={isSaving}
                   />
                 </div>
               </div>
@@ -785,21 +862,29 @@ export default function CalendarWidget({ tokens, variant = 'compact' }: Calendar
                   onChange={(e) => setNewEvent({...newEvent, location: e.target.value})}
                   className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white"
                   placeholder="Location (optional)"
+                  disabled={isSaving}
                 />
               </div>
               
               <div className="flex justify-end space-x-3 mt-4">
                 <button
-                  onClick={() => setShowAddEvent(false)}
+                  onClick={() => setShowAddEventValue(false)}
                   className="px-4 py-2 text-zinc-300 hover:text-white"
+                  disabled={isSaving}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={addEvent}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md text-white transition-colors"
+                  className={`px-4 py-2 ${isSaving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} rounded-md text-white transition-colors flex items-center`}
+                  disabled={isSaving}
                 >
-                  Add Event
+                  {isSaving ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Creating...
+                    </>
+                  ) : 'Add Event'}
                 </button>
               </div>
             </div>

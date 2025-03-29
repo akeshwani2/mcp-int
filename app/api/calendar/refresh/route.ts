@@ -17,8 +17,7 @@ export async function GET() {
     if (!tokensCookie) {
       return NextResponse.json({ 
         success: false, 
-        message: 'No tokens found',
-        redirectUrl: '/api/gmail/auth?calendar=true'
+        redirectUrl: '/api/gmail/auth?calendar=true&write=true' 
       });
     }
 
@@ -30,68 +29,55 @@ export async function GET() {
       console.error('Failed to parse token cookie:', e);
       return NextResponse.json({ 
         success: false, 
-        message: 'Invalid token format',
-        redirectUrl: '/api/gmail/auth?calendar=true'
-      });
-    }
-    
-    // Check for refresh token
-    if (!tokens.refresh_token) {
-      return NextResponse.json({ 
-        success: false, 
-        message: 'No refresh token available',
-        redirectUrl: '/api/gmail/auth?calendar=true&prompt=consent'
+        redirectUrl: '/api/gmail/auth?calendar=true&write=true' 
       });
     }
 
-    // Set credentials with the refresh token
-    oauth2Client.setCredentials({
-      refresh_token: tokens.refresh_token
-    });
+    // Check if tokens include calendar access
+    const hasReadAccess = tokens.scope?.includes('https://www.googleapis.com/auth/calendar.readonly');
+    const hasWriteAccess = tokens.scope?.includes('https://www.googleapis.com/auth/calendar.events') || 
+                          tokens.scope?.includes('https://www.googleapis.com/auth/calendar');
     
-    // Use refresh token to get new tokens
-    try {
-      const { credentials } = await oauth2Client.refreshAccessToken();
-      
-      // Update stored tokens
-      cookieStore.set('gmail_tokens', JSON.stringify(credentials), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24 * 7, // 1 week
-        path: '/',
-      });
-      
-      // Check if tokens include calendar access
-      const hasCalendarAccess = credentials.scope?.includes('https://www.googleapis.com/auth/calendar.readonly');
-      
-      // Update calendar access cookie
-      cookieStore.set('calendar_access', hasCalendarAccess ? 'true' : 'false', { 
-        httpOnly: false, // Accessible via JavaScript
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24 * 7, // 1 week
-        path: '/',
-      });
-      
-      return NextResponse.json({ 
-        success: true, 
-        message: 'Tokens refreshed successfully',
-        hasCalendarAccess
-      });
-    } catch (error) {
-      console.error('Failed to refresh token:', error);
-      // If refresh fails, we need to reauthenticate
+    if (!hasReadAccess) {
       return NextResponse.json({ 
         success: false, 
-        message: 'Failed to refresh token',
-        redirectUrl: '/api/gmail/auth?calendar=true&prompt=consent'
+        redirectUrl: '/api/gmail/auth?calendar=true'
       });
     }
+
+    if (!hasWriteAccess) {
+      return NextResponse.json({
+        success: false,
+        error: 'No calendar write access',
+        redirectUrl: '/api/gmail/auth?calendar=true&write=true&force_refresh=true'
+      });
+    }
+
+    // If token is expired, refresh it
+    if (tokens.expiry_date && tokens.expiry_date < Date.now()) {
+      oauth2Client.setCredentials({
+        refresh_token: tokens.refresh_token
+      });
+
+      const refreshResponse = await oauth2Client.refreshAccessToken();
+      tokens = refreshResponse.credentials;
+
+      // Save refreshed tokens
+      cookieStore.set('gmail_tokens', JSON.stringify(tokens), {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production'
+      });
+    }
+
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Token refresh error:', error);
+    console.error('Calendar token refresh error:', error);
     return NextResponse.json({ 
       success: false, 
-      message: 'Error refreshing tokens',
-      redirectUrl: '/api/gmail/auth?calendar=true'
+      error: 'Failed to refresh tokens',
+      redirectUrl: '/api/gmail/auth?calendar=true&write=true&force_refresh=true'
     });
   }
 } 
