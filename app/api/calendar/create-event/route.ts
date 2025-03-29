@@ -57,17 +57,38 @@ export async function POST(request: Request) {
       description: eventData.description,
       start: eventData.start,
       end: eventData.end,
-      // Optionally add other fields
       reminders: {
         useDefault: true
       }
     };
-
+    
+    // Handle conference data if provided
+    const hasConferenceData = eventData.conferenceData && 
+                             eventData.conferenceData.createRequest && 
+                             eventData.conferenceData.createRequest.conferenceSolutionKey;
+    
     // Create the event
-    const response = await calendar.events.insert({
+    const insertParams: any = {
       calendarId: 'primary',
       requestBody: event
-    });
+    };
+    
+    // If using Google Meet, we need to add the conferenceDataVersion parameter
+    if (hasConferenceData) {
+      insertParams.conferenceDataVersion = 1;
+      // @ts-ignore
+      event.conferenceData = eventData.conferenceData;
+      
+      // Log for debugging
+      console.log('Creating event with conferenceData:', event.conferenceData);
+    }
+    
+    const response = await calendar.events.insert(insertParams);
+
+    // Log the created event to see the conferenceData created by Google
+    if (response.data.conferenceData) {
+      console.log('Google created conferenceData:', JSON.stringify(response.data.conferenceData, null, 2));
+    }
 
     return NextResponse.json({ 
       success: true,

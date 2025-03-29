@@ -25,7 +25,7 @@ const CalendarPage = () => {
 
       {/* Main Content */}
       <div className="flex-1 ml-16 p-6">
-        <h1 className="text-2xl font-bold mb-4">Calendar</h1>
+        <h1 className="text-2xl font-bold mb-4"></h1>
         
         <div className="flex flex-col md:flex-row gap-6">
           {/* Calendar Section - Takes 65% of the space */}

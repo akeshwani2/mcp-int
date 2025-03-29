@@ -61,7 +61,7 @@ export async function GET() {
     });
 
     const events = response.data.items?.map(event => {
-      // Instead of just passing the strings, pass the full objects with dateTime and date
+      // Include full conferenceData in the response
       return {
         id: event.id,
         summary: event.summary,
@@ -72,7 +72,7 @@ export async function GET() {
         isAllDay: Boolean(event.start?.date && !event.start?.dateTime),
         attendees: event.attendees,
         htmlLink: event.htmlLink,
-        conferenceData: event.conferenceData
+        conferenceData: event.conferenceData,
       };
     }) || [];
 

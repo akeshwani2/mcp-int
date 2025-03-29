@@ -12,6 +12,14 @@ interface CalendarEvent {
   description?: string;
   attendees?: string[];
   htmlLink?: string;
+  conferenceData?: {
+    conferenceUrl?: string;
+    entryPoints?: Array<{
+      entryPointType: string;
+      uri: string;
+      label?: string;
+    }>;
+  };
 }
 
 interface UpcomingEventsPanelProps {
@@ -49,6 +57,41 @@ const UpcomingEventsPanel = ({ onAddEventClick }: UpcomingEventsPanelProps) => {
         day: 'numeric' 
       });
     }
+  };
+
+  // Helper to detect meeting links and get the correct URL
+  const getMeetingType = (event: CalendarEvent) => {
+    // First check conferenceData for Google Meet
+    if (event.conferenceData) {
+      // If there are video entry points, use the first one
+      const videoEntryPoint = event.conferenceData.entryPoints?.find(
+        (e: any) => e.entryPointType === 'video'
+      );
+      
+      if (videoEntryPoint?.uri) {
+        if (videoEntryPoint.uri.includes('meet.google.com')) {
+          return { type: 'meet', url: videoEntryPoint.uri };
+        }
+      }
+      
+      // If no video entry points, check for conferenceUrl
+      if (event.conferenceData.conferenceUrl) {
+        if (event.conferenceData.conferenceUrl.includes('meet.google.com')) {
+          return { type: 'meet', url: event.conferenceData.conferenceUrl };
+        }
+      }
+    }
+    
+    // Fall back to location check
+    if (event.location) {
+      if (event.location.includes('meet.google.com')) {
+        return { type: 'meet', url: event.location };
+      } else if (event.location.includes('zoom.us')) {
+        return { type: 'zoom', url: event.location };
+      }
+    }
+    
+    return null;
   };
 
   // Function to fetch calendar events
@@ -110,7 +153,8 @@ const UpcomingEventsPanel = ({ onAddEventClick }: UpcomingEventsPanelProps) => {
               location: event.location || '',
               description: event.description || '',
               attendees: event.attendees?.map((a: any) => a.email || a.displayName) || [],
-              htmlLink: event.htmlLink || ''
+              htmlLink: event.htmlLink || '',
+              conferenceData: event.conferenceData || undefined
             };
           })
           .filter((event: any) => event !== null);
@@ -170,7 +214,7 @@ const UpcomingEventsPanel = ({ onAddEventClick }: UpcomingEventsPanelProps) => {
   return (
     <div className="bg-zinc-900 rounded-xl p-5 border border-zinc-800 h-full">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-medium flex items-center">
+        <h2 className="text-md font-medium flex items-center">
           <Calendar className="w-5 h-5 mr-2" />
           Upcoming Events
         </h2>
@@ -225,7 +269,7 @@ const UpcomingEventsPanel = ({ onAddEventClick }: UpcomingEventsPanelProps) => {
           </a>
         </div>
       ) : (
-        <div className="space-y-6 overflow-y-auto max-h-[calc(100vh-200px)]">
+        <div className="space-y-6 overflow-y-auto h-[350px] pr-1">
           {Object.keys(groupedEvents).map(dateKey => (
             <div key={dateKey}>
               <div className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">
@@ -233,44 +277,68 @@ const UpcomingEventsPanel = ({ onAddEventClick }: UpcomingEventsPanelProps) => {
               </div>
               
               <div className="space-y-3">
-                {groupedEvents[dateKey].map(event => (
-                  <div 
-                    key={event.id}
-                    className="p-3 rounded-lg bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 transition-colors"
-                  >
-                    <div className="flex justify-between items-start">
-                      <h5 className="font-medium text-white text-sm mb-1">{event.title}</h5>
-                      {event.htmlLink && (
-                        <a href={event.htmlLink} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-zinc-300">
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      )}
-                    </div>
-                    
-                    <div className="text-xs text-zinc-400 space-y-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="w-3 h-3" />
-                        <span>
-                          {formatTime(event.start_time)} - {formatTime(event.end_time)}
-                        </span>
+                {groupedEvents[dateKey].map(event => {
+                  // Determine if this event has a virtual meeting
+                  const meetingInfo = getMeetingType(event);
+                  const isVirtualMeeting = !!meetingInfo;
+                  
+                  return (
+                    <div 
+                      key={event.id}
+                      className="p-3 rounded-lg bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 transition-colors"
+                    >
+                      <div className="flex justify-between items-start">
+                        <h5 className="font-medium text-white text-sm mb-1">
+                          {isVirtualMeeting && (
+                            <span className="mr-1">{meetingInfo.type === 'meet' ? '🎦' : '👥'}</span>
+                          )}
+                          {event.title}
+                        </h5>
+                        {event.htmlLink && (
+                          <a href={event.htmlLink} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-zinc-300">
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
                       </div>
                       
-                      {event.location && (
+                      <div className="text-xs text-zinc-400 space-y-1.5">
                         <div className="flex items-center gap-1.5">
-                          <MapPin className="w-3 h-3" />
-                          <span>{event.location}</span>
+                          <Clock className="w-3 h-3" />
+                          <span>
+                            {formatTime(event.start_time)} - {formatTime(event.end_time)}
+                          </span>
                         </div>
-                      )}
-                      
-                      {event.attendees && event.attendees.length > 0 && (
-                        <div className="flex items-center gap-1.5">
-                          <Users className="w-3 h-3" />
-                          <span>{event.attendees.length} attendees</span>
-                        </div>
-                      )}
+                        
+                        {isVirtualMeeting ? (
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="w-3 h-3" />
+                            <a 
+                              href={meetingInfo.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-400 hover:underline flex items-center"
+                            >
+                              {meetingInfo.type === 'meet' ? 'Google Meet' : 'Zoom'} Meeting
+                              <ExternalLink className="w-3 h-3 ml-1" />
+                            </a>
+                          </div>
+                        ) : event.location ? (
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="w-3 h-3" />
+                            <span>{event.location}</span>
+                          </div>
+                        ) : null}
+                        
+                        {event.attendees && event.attendees.length > 0 && (
+                          <div className="flex items-center gap-1.5">
+                            <Users className="w-3 h-3" />
+                            <span>{event.attendees.length} attendees</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}

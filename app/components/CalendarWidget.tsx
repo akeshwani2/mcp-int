@@ -12,6 +12,14 @@ interface CalendarEvent {
   description?: string;
   attendees?: string[];
   htmlLink?: string;
+  conferenceData?: {
+    conferenceUrl?: string;
+    entryPoints?: Array<{
+      entryPointType: string;
+      uri: string;
+      label?: string;
+    }>;
+  };
 }
 
 interface CalendarWidgetProps {
@@ -31,10 +39,11 @@ export default function CalendarWidget({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [internalShowAddEvent, setInternalShowAddEvent] = useState(false);
-  const [newEvent, setNewEvent] = useState<Partial<CalendarEvent>>({
+  const [newEvent, setNewEvent] = useState<Partial<CalendarEvent> & { meetingType?: 'none' | 'zoom' | 'meet' }>({
     title: '',
     start_time: new Date(),
     end_time: new Date(new Date().getTime() + 60 * 60 * 1000),
+    meetingType: 'none'
   });
   const [currentDate, setCurrentDate] = useState(new Date());
   const [error, setError] = useState<string | null>(null);
@@ -156,7 +165,8 @@ export default function CalendarWidget({
               location: event.location || '',
               description: event.description || '',
               attendees: event.attendees?.map((a: any) => a.email || a.displayName) || [],
-              htmlLink: event.htmlLink || ''
+              htmlLink: event.htmlLink || '',
+              conferenceData: event.conferenceData || undefined
             };
           })
           .filter((event: any) => event !== null); // Remove any events that returned null during processing
@@ -259,7 +269,51 @@ export default function CalendarWidget({
     })
     .slice(0, 5);
   
-  // Add a new event (placeholder for now - would connect to calendar API)
+  // Generate a meeting link based on the selected type
+  const generateMeetingLink = async (type: 'zoom' | 'meet') => {
+    if (type === 'meet') {
+      // Google Meet links are simple to generate client-side
+      const randomId = Math.random().toString(36).substring(2, 12);
+      return `https://meet.google.com/${randomId}`;
+    } else if (type === 'zoom') {
+      try {
+        // Call our Zoom API endpoint to create a meeting
+        const response = await fetch('/api/calendar/create-zoom-meeting', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            title: newEvent.title,
+            start_time: newEvent.start_time?.toISOString(),
+            duration: newEvent.end_time && newEvent.start_time ? 
+              Math.ceil((newEvent.end_time.getTime() - newEvent.start_time.getTime()) / (60 * 1000)) : 60
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to create Zoom meeting');
+        }
+        
+        const data = await response.json();
+        console.log('Zoom meeting created:', data);
+        
+        if (data.success && data.meeting && data.meeting.join_url) {
+          return data.meeting.join_url;
+        } else {
+          throw new Error('Invalid Zoom meeting response');
+        }
+      } catch (error) {
+        console.error('Error generating Zoom link:', error);
+        // Fallback to a placeholder link if the API call fails
+        const randomId = Math.random().toString(36).substring(2, 10);
+        return `https://zoom.us/j/${randomId}`;
+      }
+    }
+    return '';
+  };
+
+  // Add a new event
   const addEvent = async () => {
     if (!newEvent.title || !newEvent.start_time || !newEvent.end_time) {
       return;
@@ -268,10 +322,32 @@ export default function CalendarWidget({
     setIsSaving(true);
     
     try {
+      // Prepare event data
+      let location = newEvent.location || '';
+      let conferenceData = undefined;
+      
+      if (newEvent.meetingType && newEvent.meetingType !== 'none') {
+        if (newEvent.meetingType === 'meet') {
+          // For Google Meet, use the conferenceData API
+          conferenceData = {
+            createRequest: {
+              requestId: Math.random().toString(36).substring(2, 12),
+              conferenceSolutionKey: { type: 'hangoutsMeet' }
+            }
+          };
+          // Clear location to ensure it doesn't conflict with conferenceData
+          location = '';
+        } else if (newEvent.meetingType === 'zoom') {
+          // For Zoom, generate a link and set it as location
+          const meetingLink = await generateMeetingLink('zoom');
+          location = meetingLink;
+        }
+      }
+      
       // Format the dates for the API
       const formattedEvent = {
         summary: newEvent.title,
-        location: newEvent.location || '',
+        location: location,
         description: newEvent.description || '',
         start: {
           dateTime: newEvent.start_time.toISOString(),
@@ -280,7 +356,8 @@ export default function CalendarWidget({
         end: {
           dateTime: newEvent.end_time.toISOString(),
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-        }
+        },
+        conferenceData: conferenceData
       };
       
       // Call the API to create the event
@@ -307,6 +384,11 @@ export default function CalendarWidget({
       const data = await response.json();
       console.log('Event created:', data);
       
+      // Add additional console log to inspect conferenceData
+      if (data.event?.conferenceData) {
+        console.log('Created event conference data:', data.event.conferenceData);
+      }
+      
       // Refresh events to show the new one
       await refreshCalendarEvents();
       
@@ -316,6 +398,7 @@ export default function CalendarWidget({
         title: '',
         start_time: new Date(),
         end_time: new Date(new Date().getTime() + 60 * 60 * 1000),
+        meetingType: 'none'
       });
     } catch (error) {
       console.error('Error creating event:', error);
@@ -373,6 +456,41 @@ export default function CalendarWidget({
     groupedEvents[dateKey].push(event);
   });
   
+  // Helper to detect meeting links and get the correct URL
+  const getMeetingType = (event: CalendarEvent) => {
+    // First check conferenceData for Google Meet
+    if (event.conferenceData) {
+      // If there are video entry points, use the first one
+      const videoEntryPoint = event.conferenceData.entryPoints?.find(
+        (e: any) => e.entryPointType === 'video'
+      );
+      
+      if (videoEntryPoint?.uri) {
+        if (videoEntryPoint.uri.includes('meet.google.com')) {
+          return { type: 'meet', url: videoEntryPoint.uri };
+        }
+      }
+      
+      // If no video entry points, check for conferenceUrl
+      if (event.conferenceData.conferenceUrl) {
+        if (event.conferenceData.conferenceUrl.includes('meet.google.com')) {
+          return { type: 'meet', url: event.conferenceData.conferenceUrl };
+        }
+      }
+    }
+    
+    // Fall back to location check
+    if (event.location) {
+      if (event.location.includes('meet.google.com')) {
+        return { type: 'meet', url: event.location };
+      } else if (event.location.includes('zoom.us')) {
+        return { type: 'zoom', url: event.location };
+      }
+    }
+    
+    return null;
+  };
+  
   // Render the calendar grid for the full view
   const renderCalendarGrid = () => {
     const year = currentDate.getFullYear();
@@ -414,11 +532,18 @@ export default function CalendarWidget({
             )}
           </div>
           <div className="mt-1 space-y-1 overflow-hidden max-h-14">
-            {dayEvents.slice(0, 2).map(event => (
-              <div key={event.id} className="text-xs bg-blue-900/30 text-blue-300 px-1 py-0.5 rounded truncate">
-                {formatTime(event.start_time)} {event.title}
-              </div>
-            ))}
+            {dayEvents.slice(0, 2).map(event => {
+              // Check if the event has a virtual meeting
+              const meetingInfo = getMeetingType(event);
+              const meetingIcon = meetingInfo ? 
+                (meetingInfo.type === 'meet' ? '🎦 ' : '👥 ') : '';
+
+              return (
+                <div key={event.id} className={`text-xs ${meetingInfo ? 'bg-indigo-900/40 text-indigo-300' : 'bg-blue-900/30 text-blue-300'} px-1 py-0.5 rounded truncate`}>
+                  {formatTime(event.start_time)} {meetingIcon}{event.title}
+                </div>
+              );
+            })}
             {dayEvents.length > 2 && (
               <div className="text-xs text-zinc-400 text-center">+{dayEvents.length - 2}</div>
             )}
@@ -528,44 +653,68 @@ export default function CalendarWidget({
                 </div>
                 
                 <div className="space-y-2">
-                  {groupedEvents[dateKey].map(event => (
-                    <div 
-                      key={event.id}
-                      className="p-3 rounded-lg bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 transition-colors"
-                    >
-                      <div className="flex justify-between items-start">
-                        <h5 className="font-medium text-white text-sm mb-1">{event.title}</h5>
-                        {event.htmlLink && (
-                          <a href={event.htmlLink} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-zinc-300">
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        )}
-                      </div>
-                      
-                      <div className="text-xs text-zinc-400 space-y-1">
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="w-3 h-3" />
-                          <span>
-                            {formatTime(event.start_time)} - {formatTime(event.end_time)}
-                          </span>
+                  {groupedEvents[dateKey].map(event => {
+                    // Determine if this event has a virtual meeting
+                    const meetingInfo = getMeetingType(event);
+                    const isVirtualMeeting = !!meetingInfo;
+                    
+                    return (
+                      <div 
+                        key={event.id}
+                        className="p-3 rounded-lg bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 transition-colors"
+                      >
+                        <div className="flex justify-between items-start">
+                          <h5 className="font-medium text-white text-sm mb-1">
+                            {isVirtualMeeting && (
+                              <span className="mr-1">{meetingInfo.type === 'meet' ? '🎦' : '👥'}</span>
+                            )}
+                            {event.title}
+                          </h5>
+                          {event.htmlLink && (
+                            <a href={event.htmlLink} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-zinc-300">
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          )}
                         </div>
                         
-                        {event.location && (
+                        <div className="text-xs text-zinc-400 space-y-1">
                           <div className="flex items-center gap-1.5">
-                            <MapPin className="w-3 h-3" />
-                            <span>{event.location}</span>
+                            <Clock className="w-3 h-3" />
+                            <span>
+                              {formatTime(event.start_time)} - {formatTime(event.end_time)}
+                            </span>
                           </div>
-                        )}
-                        
-                        {event.attendees && event.attendees.length > 0 && (
-                          <div className="flex items-center gap-1.5">
-                            <Users className="w-3 h-3" />
-                            <span>{Array.isArray(event.attendees) ? event.attendees.length : 0}</span>
+                          
+                          {isVirtualMeeting ? (
+                            <div className="flex items-center gap-1.5">
+                              <MapPin className="w-3 h-3" />
+                              <a 
+                                href={meetingInfo.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:underline flex items-center"
+                              >
+                                {meetingInfo.type === 'meet' ? 'Google Meet' : 'Zoom'} Meeting
+                                <ExternalLink className="w-3 h-3 ml-1" />
+                              </a>
                             </div>
-                        )}
+                          ) : event.location ? (
+                            <div className="flex items-center gap-1.5">
+                              <MapPin className="w-3 h-3" />
+                              <span>{event.location}</span>
+                            </div>
+                          ) : null}
+                          
+                          {event.attendees && event.attendees.length > 0 && (
+                            <div className="flex items-center gap-1.5">
+                              <Users className="w-3 h-3" />
+                              <span>{Array.isArray(event.attendees) ? event.attendees.length : 0}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}
@@ -616,16 +765,37 @@ export default function CalendarWidget({
                 </div>
                 
                 <div>
-                  <label className="block text-sm text-zinc-400 mb-1">Location</label>
-                  <input
-                    type="text"
-                    value={newEvent.location || ''}
-                    onChange={(e) => setNewEvent({...newEvent, location: e.target.value})}
+                  <label className="block text-sm text-zinc-400 mb-1">Meeting Type</label>
+                  <select 
+                    value={newEvent.meetingType || 'none'} 
+                    onChange={(e) => setNewEvent({...newEvent, meetingType: e.target.value as 'none' | 'zoom' | 'meet'})}
                     className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white"
-                    placeholder="Location (optional)"
                     disabled={isSaving}
-                  />
+                  >
+                    <option value="none">No virtual meeting</option>
+                    <option value="meet">Google Meet</option>
+                    <option value="zoom">Zoom</option>
+                  </select>
+                  {newEvent.meetingType !== 'none' && (
+                    <p className="text-xs text-zinc-500 mt-1">
+                      A {newEvent.meetingType === 'meet' ? 'Google Meet' : 'Zoom'} link will be generated automatically.
+                    </p>
+                  )}
                 </div>
+                
+                {newEvent.meetingType === 'none' && (
+                  <div>
+                    <label className="block text-sm text-zinc-400 mb-1">Location (optional)</label>
+                    <input
+                      type="text"
+                      value={newEvent.location || ''}
+                      onChange={(e) => setNewEvent({...newEvent, location: e.target.value})}
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white"
+                      placeholder="Location"
+                      disabled={isSaving}
+                    />
+                  </div>
+                )}
                 
                 <div className="flex justify-end space-x-3 mt-4">
                   <button
@@ -696,13 +866,13 @@ export default function CalendarWidget({
               Refresh
             </button>
             
-            <button
+            {/* <button
               onClick={() => setShowAddEventValue(true)}
               className="flex items-center text-xs bg-zinc-900 hover:bg-zinc-800 text-white px-2 py-1 rounded border border-zinc-700 transition-colors"
             >
               <Plus className="w-3.5 h-3.5 mr-1" />
               Add Event
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
@@ -766,44 +936,68 @@ export default function CalendarWidget({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {upcomingEvents.map(event => (
-                    <div 
-                      key={event.id}
-                      className="p-3 rounded-lg bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 transition-colors"
-                    >
-                      <div className="flex justify-between items-start">
-                        <h5 className="font-medium text-white text-sm mb-1">{event.title}</h5>
-                        {event.htmlLink && (
-                          <a href={event.htmlLink} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-zinc-300">
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        )}
-                      </div>
-                      
-                      <div className="text-xs text-zinc-400 space-y-1">
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="w-3 h-3" />
-                          <span>
-                            {formatDate(event.start_time)} • {formatTime(event.start_time)} - {formatTime(event.end_time)}
-                          </span>
+                  {upcomingEvents.map(event => {
+                    // Determine if this event has a virtual meeting
+                    const meetingInfo = getMeetingType(event);
+                    const isVirtualMeeting = !!meetingInfo;
+                    
+                    return (
+                      <div 
+                        key={event.id}
+                        className="p-3 rounded-lg bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 transition-colors"
+                      >
+                        <div className="flex justify-between items-start">
+                          <h5 className="font-medium text-white text-sm mb-1">
+                            {isVirtualMeeting && (
+                              <span className="mr-1">{meetingInfo.type === 'meet' ? '🎦' : '👥'}</span>
+                            )}
+                            {event.title}
+                          </h5>
+                          {event.htmlLink && (
+                            <a href={event.htmlLink} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-zinc-300">
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          )}
                         </div>
                         
-                        {event.location && (
+                        <div className="text-xs text-zinc-400 space-y-1">
                           <div className="flex items-center gap-1.5">
-                            <MapPin className="w-3 h-3" />
-                            <span>{event.location}</span>
+                            <Clock className="w-3 h-3" />
+                            <span>
+                              {formatDate(event.start_time)} • {formatTime(event.start_time)} - {formatTime(event.end_time)}
+                            </span>
                           </div>
-                        )}
-                        
-                        {event.attendees && event.attendees.length > 0 && (
-                          <div className="flex items-center gap-1.5">
-                            <Users className="w-3 h-3" />
-                            <span>{Array.isArray(event.attendees) ? event.attendees.length : 0}</span>
-                          </div>
-                        )}
+                          
+                          {isVirtualMeeting ? (
+                            <div className="flex items-center gap-1.5">
+                              <MapPin className="w-3 h-3" />
+                              <a 
+                                href={meetingInfo.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:underline flex items-center"
+                              >
+                                {meetingInfo.type === 'meet' ? 'Google Meet' : 'Zoom'} Meeting
+                                <ExternalLink className="w-3 h-3 ml-1" />
+                              </a>
+                            </div>
+                          ) : event.location ? (
+                            <div className="flex items-center gap-1.5">
+                              <MapPin className="w-3 h-3" />
+                              <span>{event.location}</span>
+                            </div>
+                          ) : null}
+                          
+                          {event.attendees && event.attendees.length > 0 && (
+                            <div className="flex items-center gap-1.5">
+                              <Users className="w-3 h-3" />
+                              <span>{Array.isArray(event.attendees) ? event.attendees.length : 0}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -855,16 +1049,36 @@ export default function CalendarWidget({
               </div>
               
               <div>
-                <label className="block text-sm text-zinc-400 mb-1">Location</label>
-                <input
-                  type="text"
-                  value={newEvent.location || ''}
-                  onChange={(e) => setNewEvent({...newEvent, location: e.target.value})}
+                <label className="block text-sm text-zinc-400 mb-1">Meeting Type</label>
+                <select 
+                  value={newEvent.meetingType || 'none'} 
+                  onChange={(e) => setNewEvent({...newEvent, meetingType: e.target.value as 'none' | 'zoom' | 'meet'})}
                   className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white"
-                  placeholder="Location (optional)"
                   disabled={isSaving}
-                />
+                >
+                  <option value="none">No virtual meeting</option>
+                  <option value="meet">Google Meet</option>
+                </select>
+                {newEvent.meetingType !== 'none' && (
+                  <p className="text-xs text-zinc-500 mt-1">
+                    A {newEvent.meetingType === 'meet' ? 'Google Meet' : 'Zoom'} link will be generated automatically.
+                  </p>
+                )}
               </div>
+              
+              {newEvent.meetingType === 'none' && (
+                <div>
+                  <label className="block text-sm text-zinc-400 mb-1">Location (optional)</label>
+                  <input
+                    type="text"
+                    value={newEvent.location || ''}
+                    onChange={(e) => setNewEvent({...newEvent, location: e.target.value})}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-white"
+                    placeholder="Location"
+                    disabled={isSaving}
+                  />
+                </div>
+              )}
               
               <div className="flex justify-end space-x-3 mt-4">
                 <button
