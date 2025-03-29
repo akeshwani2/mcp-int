@@ -7,6 +7,7 @@ import CalendarWidget from './CalendarWidget';
 
 interface EmailSummaryDashboardProps {
   tokens: string | null;
+  onConnectAccount?: () => void;
 }
 
 interface EmailSummary {
@@ -54,9 +55,7 @@ const handleReconnectGmail = async () => {
   }
 };
 
-
-
-export default function EmailSummaryDashboard({ tokens }: EmailSummaryDashboardProps) {
+export default function EmailSummaryDashboard({ tokens, onConnectAccount }: EmailSummaryDashboardProps) {
   const [summary, setSummary] = useState<EmailSummary>({
     immediateAction: [],
     mediumPriority: [],
@@ -237,16 +236,20 @@ export default function EmailSummaryDashboard({ tokens }: EmailSummaryDashboardP
   
   if (summary.isLoading) {
     return (
-      <div className="w-full max-w-4xl">
-        <div className="bg-black rounded-xl p-6 border border-zinc-800">
-          <div className="flex items-center justify-center h-40">
-            <div className="flex flex-col items-center">
-              <div className="flex space-x-2 mb-4">
-                <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-              </div>
-              <p className="text-zinc-400">Loading your email summary...</p>
+      <div className="w-full h-screen flex items-center justify-center">
+        <div className="bg-black rounded-xl p-8 border border-zinc-800 w-full max-w-md">
+          <div className="flex flex-col items-center justify-center py-8">
+            <div className="bg-purple-500/20 p-6 rounded-full mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400 animate-pulse">
+                <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+              </svg>
+            </div>
+            <h3 className="text-xl font-medium mb-3">Loading your email summary...</h3>
+            <div className="flex space-x-2 mt-2">
+              <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
             </div>
           </div>
         </div>
@@ -267,7 +270,7 @@ export default function EmailSummaryDashboard({ tokens }: EmailSummaryDashboardP
               </div>
               <p className="text-zinc-400 mb-4 text-center">Connect your Gmail account to see your email summary and important messages.</p>
               <button
-                onClick={handleConnectGmail}
+                onClick={onConnectAccount || handleConnectGmail}
                 className="bg-zinc-900 text-white px-4 py-2 rounded-lg hover:bg-zinc-800 transition-colors border border-zinc-700"
               >
                 Connect Gmail
@@ -300,7 +303,7 @@ export default function EmailSummaryDashboard({ tokens }: EmailSummaryDashboardP
                   Retry
                 </button>
                 <button
-                  onClick={handleConnectGmail}
+                  onClick={onConnectAccount || handleConnectGmail}
                   className="bg-zinc-900 text-white px-4 py-2 rounded-lg hover:bg-zinc-800 transition-colors border border-zinc-700"
                 >
                   Reconnect Gmail
@@ -363,7 +366,7 @@ export default function EmailSummaryDashboard({ tokens }: EmailSummaryDashboardP
             Connect calendar permissions to enable scheduling features.
           </p>
           <button
-            onClick={handleReconnectGmail}
+            onClick={onConnectAccount || handleReconnectGmail}
             className="text-xs bg-zinc-800 text-white px-2 py-1 rounded hover:bg-zinc-700 transition-colors"
           >
             Connect Calendar
@@ -467,16 +470,11 @@ export default function EmailSummaryDashboard({ tokens }: EmailSummaryDashboardP
         {/* Calendar Widget */}
         {parsedTokens && (
           <div className="lg:row-span-1 relative h-[500px]">
-            <CalendarWidget tokens={tokens} variant="compact" />
-            {/* <div className="absolute top-4 right-4">
-              <button 
-                onClick={handleReconnectGmail}
-                className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition-colors flex items-center"
-              >
-                <RefreshCw className="w-3 h-3 mr-1.5" />
-                Reconnect
-              </button>
-            </div> */}
+            <CalendarWidget 
+              tokens={tokens} 
+              variant="compact" 
+              onConnectAccount={onConnectAccount}
+            />
           </div>
         )}
       </div>

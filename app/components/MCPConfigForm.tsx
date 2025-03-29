@@ -231,62 +231,38 @@ export function MCPConfigForm() {
   }
 
   return (
-    <div className="w-full h-screen flex flex-col p-6 bg-background text-zinc-300">
-      <header className="mb-4 border-b border-zinc-800 pb-4">
+    <div className="max-w-3xl max-h-[80vh] overflow-y-auto flex flex-col p-4 bg-zinc-900 text-zinc-300 mx-auto">
+      <header className="mb-3 border-b border-zinc-800 pb-3">
         <div className="grid grid-cols-3 gap-2 w-full">
           {/* Active Servers Card */}
-          <div
-            className={`${totalServers === 0 ? 'border border-gray-800 rounded-lg p-2' : 'border border-white/40 rounded-lg p-2'}`}
-          >
-            <div className="flex items-center justify-start mb-3">
-              <span
-                className={`${totalServers === 0 ? 'text-sm text-zinc-500' : 'text-sm text-white'}`}
-              >
+          <div className={`${totalServers === 0 ? 'border border-gray-800' : 'border border-white/40'} rounded-lg p-2`}>
+            <div className="flex items-center justify-between">
+              <span className={`${totalServers === 0 ? 'text-xs text-zinc-500' : 'text-xs text-white'}`}>
                 Active Servers
               </span>
-            </div>
-            <div className="flex">
-              <span
-                className={`${totalServers === 0 ? 'text-lg text-zinc-500' : 'text-lg text-white'}`}
-              >
+              <span className={`${totalServers === 0 ? 'text-sm text-zinc-500' : 'text-sm text-white'}`}>
                 {totalServers}
               </span>
             </div>
           </div>
           {/* SSE Servers Card */}
-          <div
-            className={`${sseServers === 0 ? 'border border-gray-800 rounded-lg p-2' : 'border border-white/40 rounded-lg p-2'}`}
-          >
-            <div className="flex items-center justify-start mb-3">
-              <span
-                className={`${sseServers === 0 ? 'text-sm text-zinc-500' : 'text-sm text-white'}`}
-              >
+          <div className={`${sseServers === 0 ? 'border border-gray-800' : 'border border-white/40'} rounded-lg p-2`}>
+            <div className="flex items-center justify-between">
+              <span className={`${sseServers === 0 ? 'text-xs text-zinc-500' : 'text-xs text-white'}`}>
                 SSE Servers
               </span>
-            </div>
-            <div className="flex">
-              <span
-                className={`${sseServers === 0 ? 'text-lg text-zinc-500' : 'text-lg text-white'}`}
-              >
+              <span className={`${sseServers === 0 ? 'text-sm text-zinc-500' : 'text-sm text-white'}`}>
                 {sseServers}
               </span>
             </div>
           </div>
           {/* Standard/IO Servers Card */}
-          <div
-            className={`${stdioServers === 0 ? 'border border-gray-800 rounded-lg p-2' : 'border border-white/40 rounded-lg p-2'}`}
-          >
-            <div className="flex items-center justify-start mb-3">
-              <span
-                className={`${stdioServers === 0 ? 'text-sm text-zinc-500' : 'text-sm text-white'}`}
-              >
+          <div className={`${stdioServers === 0 ? 'border border-gray-800' : 'border border-white/40'} rounded-lg p-2`}>
+            <div className="flex items-center justify-between">
+              <span className={`${stdioServers === 0 ? 'text-xs text-zinc-500' : 'text-xs text-white'}`}>
                 Standard Servers
               </span>
-            </div>
-            <div className="flex">
-              <span
-                className={`${stdioServers === 0 ? 'text-lg text-zinc-500' : 'text-lg text-white'}`}
-              >
+              <span className={`${stdioServers === 0 ? 'text-sm text-zinc-500' : 'text-sm text-white'}`}>
                 {stdioServers}
               </span>
             </div>
@@ -295,8 +271,8 @@ export function MCPConfigForm() {
       </header>
 
       {totalServers === 0 ? (
-        <div className="flex flex-col items-center justify-center h-40 text-zinc-600 border border-zinc-800 rounded-md bg-background">
-          <p className="text-sm mb-3">
+        <div className="flex flex-col items-center justify-center py-5 text-zinc-600 border border-zinc-800 rounded-md bg-background">
+          <p className="text-xs mb-2">
             No servers connected yet. Add a server or browse the marketplace.
           </p>
           <div className="flex gap-3">
@@ -310,8 +286,8 @@ export function MCPConfigForm() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3">
-          <div className="flex gap-2">
+        <div className="grid grid-cols-1 gap-2">
+          <div className="flex gap-2 mb-2">
             <button
               onClick={() => setShowAddServerForm(true)}
               className="px-3 flex-1 hover:scale-105 transition-all duration-300 cursor-pointer py-1.5 bg-background text-zinc-400 text-center justify-center rounded border border-zinc-800 hover:bg-zinc-800 flex items-center gap-1.5 text-xs"
@@ -320,78 +296,79 @@ export function MCPConfigForm() {
               Add Server
             </button>
           </div>
-          {Object.entries(configs).map(([name, config]) => (
-            <div
-              key={name}
-              className="relative p-4 rounded-md border border-zinc-800 bg-zinc-900/30"
-            >
-              <div className="absolute top-3 right-3">
-                <button
-                  onClick={() => removeConfig(name)}
-                  className="cursor-pointer hover:scale-105 transition-all duration-300"
-                >
-                  <Trash2 className="w-4 h-4 text-red-500" />
-                </button>
-              </div>
-
-              <div className="flex flex-col items-start">
-                <div className="flex items-center">
-                  {config.transport === 'stdio' ? (
-                    <TerminalSquare size={16} className="mr-2 text-green-500" />
-                  ) : (
-                    <Globe size={16} className="mr-2 text-blue-500" />
-                  )}
+          <div className="grid grid-cols-2 gap-2">
+            {Object.entries(configs).map(([name, config]) => (
+              <div
+                key={name}
+                className="relative p-3 rounded-md border border-zinc-800 bg-zinc-900/30"
+              >
+                <div className="absolute top-2 right-2">
+                  <button
+                    onClick={() => removeConfig(name)}
+                    className="cursor-pointer hover:scale-105 transition-all duration-300"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                  </button>
                 </div>
 
-                <h3 className="text-sm font-medium text-white mb-1">{name}</h3>
+                <div className="flex flex-col items-start pr-5">
+                  <div className="flex items-center">
+                    {config.transport === 'stdio' ? (
+                      <TerminalSquare size={14} className="mr-1.5 text-green-500" />
+                    ) : (
+                      <Globe size={14} className="mr-1.5 text-blue-500" />
+                    )}
+                    <h3 className="text-xs font-medium text-white">{name}</h3>
+                  </div>
 
-                <div className="text-xs text-zinc-500">
-                  {config.transport === 'stdio' ? (
-                    <p className="font-mono">{config.command}</p>
-                  ) : (
-                    <p className="font-mono truncate max-w-[250px]" title={config.url}>
-                      {config.url}
-                    </p>
-                  )}
+                  <div className="text-[10px] text-zinc-500 mt-1 max-w-full overflow-hidden">
+                    {config.transport === 'stdio' ? (
+                      <p className="font-mono truncate">{config.command}</p>
+                    ) : (
+                      <p className="font-mono truncate" title={config.url}>
+                        {config.url}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
       {showAddServerForm && (
         <div className="fixed inset-0 bg-background/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg w-full max-w-md overflow-hidden">
-            <div className="flex justify-between items-center p-4 border-b border-zinc-800">
-              <h2 className="text-zinc-300 text-sm font-medium">Add Server</h2>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg w-full max-w-sm overflow-hidden">
+            <div className="flex justify-between items-center p-3 border-b border-zinc-800">
+              <h2 className="text-zinc-300 text-xs font-medium">Add Server</h2>
               <button
                 onClick={() => setShowAddServerForm(false)}
-                className="text-zinc-500 cursor-pointer hover:scale-105 transition-all duration-300 hover:text-zinc-300"
+                className="text-zinc-500 cursor-pointer hover:text-zinc-300"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-4 space-y-4">
+            <div className="p-3 space-y-3">
               <div>
-                <label className="block text-xs text-zinc-500 mb-1.5">Server Name</label>
+                <label className="block text-xs text-zinc-500 mb-1">Server Name</label>
                 <input
                   type="text"
                   value={serverName}
                   onChange={(e) => setServerName(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded text-xs px-3 py-2 text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-700"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded text-xs px-3 py-1.5 text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-700"
                   placeholder="e.g. Gmail"
                 />
               </div>
 
               <div>
-                <label className="block text-xs text-zinc-500 mb-1.5">Server Type</label>
+                <label className="block text-xs text-zinc-500 mb-1">Server Type</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setConnectionType('stdio')}
-                    className={`flex items-center justify-center cursor-pointer px-3 py-2 rounded text-xs ${
+                    className={`flex items-center justify-center cursor-pointer px-2 py-1.5 rounded text-xs ${
                       connectionType === 'stdio'
                         ? 'bg-zinc-800 text-zinc-300 border border-zinc-700'
                         : 'bg-zinc-950 text-zinc-500 border border-zinc-800'
@@ -403,7 +380,7 @@ export function MCPConfigForm() {
                   <button
                     type="button"
                     onClick={() => setConnectionType('sse')}
-                    className={`flex items-center cursor-pointer justify-center px-3 py-2 rounded text-xs ${
+                    className={`flex items-center cursor-pointer justify-center px-2 py-1.5 rounded text-xs ${
                       connectionType === 'sse'
                         ? 'bg-zinc-800 text-zinc-300 border border-zinc-700'
                         : 'bg-zinc-950 text-zinc-500 border border-zinc-800'
@@ -418,41 +395,41 @@ export function MCPConfigForm() {
               {connectionType === 'stdio' ? (
                 <>
                   <div>
-                    <label className="block text-xs text-zinc-500 mb-1.5">Command</label>
+                    <label className="block text-xs text-zinc-500 mb-1">Command</label>
                     <input
                       type="text"
                       value={command}
                       onChange={(e) => setCommand(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded text-xs px-3 py-2 text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-700"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded text-xs px-3 py-1.5 text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-700"
                       placeholder="e.g. python"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-zinc-500 mb-1.5">Arguments</label>
+                    <label className="block text-xs text-zinc-500 mb-1">Arguments</label>
                     <input
                       type="text"
                       value={args}
                       onChange={(e) => setArgs(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded text-xs px-3 py-2 text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-700"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded text-xs px-3 py-1.5 text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-700"
                       placeholder="e.g. path/to/main.py"
                     />
                   </div>
                 </>
               ) : (
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1.5">URL</label>
+                  <label className="block text-xs text-zinc-500 mb-1">URL</label>
                   <input
                     type="text"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded text-xs px-3 py-2 text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-700"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded text-xs px-3 py-1.5 text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-700"
                     placeholder="e.g. https://mcp.composio.dev/gmail"
                   />
                 </div>
               )}
             </div>
 
-            <div className="flex justify-end gap-2 p-4 border-t border-zinc-800">
+            <div className="flex justify-end gap-2 p-3 border-t border-zinc-800">
               <button
                 onClick={() => setShowAddServerForm(false)}
                 className="px-3 py-1.5 cursor-pointer border border-zinc-800 text-zinc-400 rounded text-xs hover:bg-zinc-800"

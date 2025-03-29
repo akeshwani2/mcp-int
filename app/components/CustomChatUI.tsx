@@ -268,7 +268,7 @@ export function CustomChatUI({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl w-full">
               <button 
                 onClick={() => handleQuickAction("schedule")}
-                className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
+                className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left cursor-pointer"
               >
                 <Calendar size={18} className="text-blue-400" />
                 <span>Schedule a meeting</span>
@@ -276,7 +276,7 @@ export function CustomChatUI({
               
               <button 
                 onClick={() => handleQuickAction("summarize")}
-                className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
+                className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left cursor-pointer"
               >
                 <Mail size={18} className="text-purple-400" />
                 <span>Summarize my emails</span>
@@ -284,7 +284,7 @@ export function CustomChatUI({
               
               <button 
                 onClick={() => handleQuickAction("reminder")}
-                className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
+                className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left cursor-pointer"
               >
                 <Clock size={18} className="text-green-400" />
                 <span>Set a reminder</span>
@@ -292,7 +292,7 @@ export function CustomChatUI({
               
               <button 
                 onClick={() => handleQuickAction("tasks")}
-                className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left"
+                className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left cursor-pointer"
               >
                 <CheckSquare size={18} className="text-amber-400" />
                 <span>Manage my tasks</span>

@@ -169,16 +169,16 @@ Be concise but friendly in your responses. If a service isn't enabled yet, guide
 
       {/* Server config panel - Now in a modal dialog that appears when clicking the server tab */}
       {isConfigOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-          <div className="relative w-full max-w-4xl h-[90vh] bg-black border border-white/10 rounded-lg shadow-xl overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="relative w-full max-w-4xl bg-zinc-900 border border-white/10 rounded-xl h-auto max-h-[80vh] overflow-hidden shadow-xl">
             <button
               onClick={() => setIsConfigOpen(false)}
-              className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-white/10 transition-colors z-10"
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white z-10"
               aria-label="Close config"
             >
               <X size={20} />
             </button>
-            <div className="h-full overflow-auto">
+            <div className="overflow-auto">
               <MCPConfigForm />
             </div>
           </div>

@@ -5,11 +5,18 @@ import Sidebar from '../components/Sidebar';
 import EmailSummaryDashboard from '../components/EmailSummaryDashboard';
 import { ServerTracker } from '../components/ServerTracker';
 import { MCPConfigForm } from '../components/MCPConfigForm';
+import OAuthRequiredModal from '../components/OAuthRequiredModal';
 import { X } from 'lucide-react';
 
 const EmailPage = () => {
   const [configOpen, setConfigOpen] = useState(false);
   const [gmailTokens, setGmailTokens] = useState<string | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  // Function to handle opening the auth modal
+  const handleConnectAccount = () => {
+    setAuthModalOpen(true);
+  };
 
   // Check if user is already authenticated with Gmail
   useEffect(() => {
@@ -41,6 +48,9 @@ const EmailPage = () => {
       
       if (envTokens.access_token && envTokens.refresh_token) {
         setGmailTokens(JSON.stringify(envTokens));
+      } else {
+        // If no authentication found, show the auth modal
+        setAuthModalOpen(true);
       }
     };
     
@@ -61,9 +71,12 @@ const EmailPage = () => {
         
         <div className="w-full">
           {gmailTokens ? (
-            <EmailSummaryDashboard tokens={gmailTokens} />
+            <EmailSummaryDashboard 
+              tokens={gmailTokens}
+              onConnectAccount={handleConnectAccount}
+            />
           ) : (
-            <div className="bg-zinc-900 rounded-xl p-8 border border-zinc-800 text-center">
+            <div className="bg-black rounded-xl p-8 border border-zinc-800 text-center">
               <div className="flex flex-col items-center justify-center py-8">
                 <div className="bg-purple-500/20 p-6 rounded-full mb-6">
                   <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400">
@@ -76,9 +89,7 @@ const EmailPage = () => {
                   Connect your Gmail account to view and manage your emails.
                 </p>
                 <button 
-                  onClick={() => {
-                    window.location.href = '/api/gmail/auth';
-                  }}
+                  onClick={handleConnectAccount}
                   className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-md transition-colors"
                 >
                   Connect Gmail
@@ -91,21 +102,27 @@ const EmailPage = () => {
 
       {/* Server config panel - Modal dialog */}
       {configOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-          <div className="relative w-full max-w-4xl h-[90vh] bg-black border border-white/10 rounded-lg shadow-xl overflow-hidden">
-            <button
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-zinc-900 rounded-xl max-w-3xl w-full h-auto max-h-[80vh] overflow-hidden relative">
+            <button 
               onClick={() => setConfigOpen(false)}
-              className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-white/10 transition-colors z-10"
-              aria-label="Close config"
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white z-10"
             >
               <X size={20} />
             </button>
-            <div className="h-full overflow-auto">
+            <div className="overflow-auto">
               <MCPConfigForm />
             </div>
           </div>
         </div>
       )}
+      
+      {/* OAuth Required Modal */}
+      <OAuthRequiredModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        services={['gmail']}
+      />
     </div>
   );
 };

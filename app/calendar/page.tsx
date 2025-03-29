@@ -92,14 +92,16 @@ const CalendarPage = () => {
       {/* Server config panel - Modal dialog */}
       {configOpen && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 rounded-xl max-w-3xl w-full relative">
+          <div className="bg-zinc-900 rounded-xl max-w-3xl w-full h-auto max-h-[80vh] overflow-hidden relative">
             <button 
               onClick={() => setConfigOpen(false)}
-              className="absolute top-4 right-4 text-zinc-400 hover:text-white"
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white z-10"
             >
               <X size={20} />
             </button>
-            <MCPConfigForm />
+            <div className="overflow-auto">
+              <MCPConfigForm />
+            </div>
           </div>
         </div>
       )}
