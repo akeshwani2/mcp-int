@@ -323,20 +323,87 @@ export default function EmailSummaryDashboard({ tokens, onConnectAccount }: Emai
     summary.other.length === 0
   ) {
     return (
-      <div className="w-full max-w-4xl mx-auto">
-        <div className="bg-black rounded-xl p-6 border border-zinc-800">
-          <div className="flex items-center justify-center h-40">
-            <div className="flex flex-col items-center">
-              <p className="text-zinc-400 mb-4">No emails found in your inbox.</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="flex items-center bg-zinc-900 text-white px-4 py-2 rounded-lg hover:bg-zinc-800 transition-colors border border-zinc-700"
+      <div 
+        className="w-full max-w-6xl mx-auto opacity-0 animate-fadeIn"
+        style={{ animation: 'fadeIn 0.5s forwards' }}
+      >
+        <div className='text-center justify-center flex flex-col items-center mb-36'>
+          <h3 className="text-xl tracking-tight font-medium text-white">
+            Your Email & Meeting Summary
+          </h3>
+          <p className='text-zinc-400 text-sm'>View your important emails and meetings</p>
+        </div>
+
+        {/* Calendar Access Section */}
+        {parsedTokens && !hasCalendarPermission && (
+          <div className="mb-4 bg-zinc-900 rounded-lg p-3 border border-zinc-800">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Calendar className="w-4 h-4 text-blue-400" />
+              <h4 className="text-sm font-medium text-white">Calendar Access</h4>
+            </div>
+            <p className="text-zinc-400 text-xs mb-2">
+              Connect calendar permissions to enable scheduling features.
+            </p>
+            <button
+              onClick={onConnectAccount || handleReconnectGmail}
+              className="text-xs bg-zinc-800 text-white px-2 py-1 rounded hover:bg-zinc-700 transition-colors"
+            >
+              Connect Calendar
+            </button>
+          </div>
+        )}
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Immediate Action Emails */}
+          <div className="bg-black rounded-xl p-4 border border-zinc-800 h-full flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4 text-red-400" />
+                <h4 className="text-sm font-medium text-white">High Priority</h4>
+              </div>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="text-zinc-400 hover:text-white transition-colors"
+                title="Refresh emails"
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
+                <RefreshCw className="w-3.5 h-3.5" />
               </button>
             </div>
+            <div className="space-y-3 flex-1 overflow-y-auto">
+              <p className="text-zinc-500 text-sm">No high priority emails</p>
+            </div>
           </div>
+          
+          {/* Other Emails */}
+          <div className="bg-black rounded-xl p-4 border border-zinc-800 h-full flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-1.5">
+                <Inbox className="w-4 h-4 text-blue-400" />
+                <h4 className="text-sm font-medium text-white">Other Emails</h4>
+              </div>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="text-zinc-400 hover:text-white transition-colors"
+                title="Refresh emails"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="space-y-3 flex-1 overflow-y-auto">
+              <p className="text-zinc-500 text-sm">No other emails found</p>
+            </div>
+          </div>
+          
+          {/* Calendar Widget */}
+          {parsedTokens && (
+            <div className="lg:row-span-1 relative h-[500px]">
+              <CalendarWidget 
+                tokens={tokens} 
+                variant="compact" 
+                onConnectAccount={onConnectAccount}
+              />
+            </div>
+          )}
         </div>
       </div>
     );
@@ -377,9 +444,18 @@ export default function EmailSummaryDashboard({ tokens, onConnectAccount }: Emai
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Immediate Action Emails */}
         <div className="bg-black rounded-xl p-4 border border-zinc-800 h-full flex flex-col">
-          <div className="flex items-center gap-1.5 mb-3">
-            <AlertCircle className="w-4 h-4 text-red-400" />
-            <h4 className="text-sm font-medium text-white">High Priority</h4>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-1.5">
+              <AlertCircle className="w-4 h-4 text-red-400" />
+              <h4 className="text-sm font-medium text-white">High Priority</h4>
+            </div>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="text-zinc-400 hover:text-white transition-colors"
+              title="Refresh emails"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
           </div>
           <div className="space-y-3 flex-1 overflow-y-auto">
             {summary.immediateAction.length > 0 ? (
@@ -423,9 +499,18 @@ export default function EmailSummaryDashboard({ tokens, onConnectAccount }: Emai
         
         {/* Combined Medium Priority and Other Emails */}
         <div className="bg-black rounded-xl p-4 border border-zinc-800 h-full flex flex-col">
-          <div className="flex items-center gap-1.5 mb-3">
-            <Inbox className="w-4 h-4 text-blue-400" />
-            <h4 className="text-sm font-medium text-white">Other Emails</h4>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-1.5">
+              <Inbox className="w-4 h-4 text-blue-400" />
+              <h4 className="text-sm font-medium text-white">Other Emails</h4>
+            </div>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="text-zinc-400 hover:text-white transition-colors"
+              title="Refresh emails"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
           </div>
           <div className="space-y-3 flex-1 overflow-y-auto">
             {[...summary.mediumPriority, ...summary.other].length > 0 ? (
