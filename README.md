@@ -1,2 +1,1 @@
-export PATH="/Users/ak/Library/Application Support/pypoetry/venv/bin:$PATH"
-source ~/.zshrc 
+An MCP client that is a plug-and-play concept. 
