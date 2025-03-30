@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     cookieStore.set('gmail_tokens', JSON.stringify(tokens), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 7, // 1 week
+      maxAge: 60 * 60 * 24 * 365, // 1 year
       path: '/',
     });
     
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     cookieStore.set('gmail_connected', 'true', {
       httpOnly: false, // Accessible via JavaScript
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 7, // 1 week
+      maxAge: 60 * 60 * 24 * 365, // 1 year
       path: '/',
     });
     
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     cookieStore.set('calendar_access', hasCalendarAccess ? 'true' : 'false', { 
       httpOnly: false, // Accessible via JavaScript
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 7, // 1 week
+      maxAge: 60 * 60 * 24 * 365, // 1 year
       path: '/',
     });
     
