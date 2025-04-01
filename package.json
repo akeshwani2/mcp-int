@@ -11,12 +11,11 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@clerk/nextjs": "^4.29.9",
     "@copilotkit/react-core": "^1.6.0",
     "@copilotkit/react-ui": "^1.6.0",
     "@copilotkit/runtime": "^1.6.0",
     "@copilotkit/runtime-client-gql": "^1.6.0",
-    "@prisma/client": "5.10.2",
+    "@prisma/client": "^5.10.2",
     "@prisma/engines": "5.10.2",
     "@types/uuid": "^10.0.0",
     "class-validator": "^0.14.1",
