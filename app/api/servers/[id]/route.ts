@@ -15,8 +15,9 @@ export async function DELETE(request: Request) {
       )
     }
     
-    // Delete the server
-    await prisma.mCPServer.delete({
+    // Get the prisma client instance and delete the server
+    const prismaClient = await prisma
+    await prismaClient.mCPServer.delete({
       where: { id }
     })
     
