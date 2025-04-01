@@ -12,7 +12,6 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@clerk/nextjs": "^4.29.9",
     "@copilotkit/react-core": "^1.6.0",
     "@copilotkit/react-ui": "^1.6.0",
     "@copilotkit/runtime": "^1.6.0",
