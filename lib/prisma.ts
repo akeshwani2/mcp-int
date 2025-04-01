@@ -1,30 +1,21 @@
-// ESM for importing Prisma in Next.js
+// Use CommonJS style require to avoid ESM issues with Next.js
+const { PrismaClient } = require('@prisma/client')
 
-// Import types only
-import type { PrismaClient as PrismaClientType } from '@prisma/client'
+// Type definition for IDE support only
+type PrismaClientType = any
 
-// Extend global for properly typing
+// Declare global to prevent multiple instances
 declare global {
   // eslint-disable-next-line no-var
   var prisma: PrismaClientType | undefined
 }
 
-// For Next.js compatibility, use a conditional dynamic import
-let prismaInstance: PrismaClientType | undefined
+// Create prisma client if it doesn't exist already
+const prisma = global.prisma || new PrismaClient()
 
-async function getPrismaClient(): Promise<PrismaClientType> {
-  if (!prismaInstance) {
-    const { PrismaClient } = await import('@prisma/client')
-    prismaInstance = new PrismaClient()
-    
-    // Add to global in development to prevent multiple instances during hot reload
-    if (process.env.NODE_ENV !== 'production') {
-      global.prisma = prismaInstance
-    }
-  }
-  
-  return prismaInstance
+// In development, attach to global to prevent multiple instances
+if (process.env.NODE_ENV !== 'production') {
+  global.prisma = prisma
 }
 
-// Export a function that returns the Prisma client
-export const prisma = getPrismaClient() 
+export { prisma } 

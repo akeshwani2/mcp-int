@@ -6,8 +6,7 @@ import { v4 as uuidv4 } from 'uuid'
 // GET /api/servers - Get all servers
 export async function GET() {
   try {
-    const prismaClient = await prisma
-    const servers = await prismaClient.mCPServer.findMany()
+    const servers = await prisma.mCPServer.findMany()
     return NextResponse.json(servers)
   } catch (error) {
     console.error('Error fetching servers:', error)
@@ -36,8 +35,7 @@ export async function POST(req: NextRequest) {
     }
     
     // Create a new server
-    const prismaClient = await prisma
-    const server = await prismaClient.mCPServer.create({
+    const server = await prisma.mCPServer.create({
       data: {
         name,
         transport,
