@@ -1,7 +1,9 @@
 // Use CommonJS style require to avoid ESM issues with Next.js
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { PrismaClient } = require('@prisma/client')
 
 // Type definition for IDE support only
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PrismaClientType = any
 
 // Declare global to prevent multiple instances
