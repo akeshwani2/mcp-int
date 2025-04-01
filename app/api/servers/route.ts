@@ -3,26 +3,10 @@ import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { v4 as uuidv4 } from 'uuid'
 
-export async function GET(req: NextRequest) {
+// GET /api/servers - Get all servers
+export async function GET() {
   try {
-    // Get session ID from cookies
-    const cookieStore = await cookies()
-    let sessionId = cookieStore.get('sessionId')?.value
-    
-    if (!sessionId) {
-      sessionId = uuidv4()
-      cookieStore.set('sessionId', sessionId, { 
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-        path: '/' 
-      })
-    }
-    
-    // Get all servers for this session
-    const servers = await prisma.mCPServer.findMany({
-      where: { sessionId },
-      orderBy: { updatedAt: 'desc' }
-    })
-    
+    const servers = await prisma.mCPServer.findMany()
     return NextResponse.json(servers)
   } catch (error) {
     console.error('Error fetching servers:', error)

@@ -12,12 +12,11 @@ export const CopilotActionHandler: React.FC = () => {
   // add a custom action renderer for all actions
   useCopilotAction({
     name: "*",
-    render: ({ name, args, status, result }: any) => {
+    render: ({ name, args, result }: any) => {
       return (
         <ToolCallRenderer
           name={name}
           args={args}
-          status={status || "unknown"}
           result={result}
         />
       );

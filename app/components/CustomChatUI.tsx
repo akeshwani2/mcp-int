@@ -152,7 +152,6 @@ export function CustomChatUI({
           <ToolCallRenderer
             name={getDisplayName(message.name) || "Unknown Tool"}
             args={message.arguments || {}}
-            status="running"
             result={null}
           />
         );
@@ -165,7 +164,6 @@ export function CustomChatUI({
           <ToolCallRenderer
             name={getDisplayName(message.actionName) || "Unknown Tool"}
             args={message.args || {}}
-            status={message.result && message.result.error ? "error" : "success"}
             result={message.result || {}}
           />
         );
@@ -180,7 +178,6 @@ export function CustomChatUI({
                 key={index}
                 name={getDisplayName(toolCall.name) || "Unknown Tool"}
                 args={toolCall.args || {}}
-                status={toolCall.status || "unknown"}
                 result={toolCall.result}
               />
             ))}
@@ -194,7 +191,6 @@ export function CustomChatUI({
           <ToolCallRenderer
             name={getDisplayName(message.name)}
             args={message.args}
-            status={message.status}
             result={message.result}
           />
         );

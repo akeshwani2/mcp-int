@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { CheckSquare, PlusCircle, Calendar, Clock, Tag, Search, Filter, Users, Check, X, Edit, Trash2 } from 'lucide-react';
+import { CheckSquare, PlusCircle, Calendar, Clock, Tag, Search, Check, X, Edit, Trash2 } from 'lucide-react';
 
 interface Task {
   id: string;
@@ -15,13 +15,7 @@ interface Task {
   created_at: string;
 }
 
-// Component doesn't need props but we're keeping the interface for future extensibility
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface TasksWidgetProps {
-  // Props can be added as needed
-}
-
-export default function TasksWidget({}: TasksWidgetProps) {
+export default function TasksWidget() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, today, upcoming, completed
@@ -148,6 +142,7 @@ export default function TasksWidget({}: TasksWidgetProps) {
     };
     
     loadTasks();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleTaskComplete = (taskId: string) => {

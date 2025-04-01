@@ -5,14 +5,12 @@ import { useState } from "react";
 type ToolCallRendererProps = {
   name: string;
   args: any;
-  status: string;
   result: any;
 };
 
 export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
   name,
   args,
-  status,
   result,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -29,17 +27,6 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
       return String(obj);
     }
   };
-
-  // Status color mapping
-  const statusColors: Record<string, string> = {
-    running: "bg-yellow-500/20 text-yellow-300",
-    success: "bg-green-500/20 text-green-300",
-    error: "bg-red-500/20 text-red-300",
-    pending: "bg-blue-500/20 text-blue-300",
-    unknown: "bg-gray-500/20 text-gray-300",
-  };
-
-  const statusColor = statusColors[status.toLowerCase()] || "bg-gray-700/20 text-gray-300";
 
   return (
     <div className="my-2 rounded-lg border border-gray-800 overflow-hidden shadow-sm bg-black">

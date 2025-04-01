@@ -188,7 +188,8 @@ const UpcomingEventsPanel = ({ onAddEventClick, onConnectAccount }: UpcomingEven
               } else {
                 endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
               }
-            } catch (_) {
+            } catch (error) {
+              // Error is ignored, just return null
               return null;
             }
             
