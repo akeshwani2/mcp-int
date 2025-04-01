@@ -1,54 +1,30 @@
 // ESM for importing Prisma in Next.js
 
-// Use dynamic import to avoid issues with module resolution at build time
-let PrismaClient: any;
-let prisma: any;
+// Import types only
+import type { PrismaClient as PrismaClientType } from '@prisma/client'
 
-// Initialize PrismaClient
-async function initPrisma() {
-  try {
-    // Dynamically import PrismaClient
-    const module = await import('@prisma/client');
-    PrismaClient = module.PrismaClient;
+// Extend global for properly typing
+declare global {
+  // eslint-disable-next-line no-var
+  var prisma: PrismaClientType | undefined
+}
+
+// For Next.js compatibility, use a conditional dynamic import
+let prismaInstance: PrismaClientType | undefined
+
+async function getPrismaClient(): Promise<PrismaClientType> {
+  if (!prismaInstance) {
+    const { PrismaClient } = await import('@prisma/client')
+    prismaInstance = new PrismaClient()
     
-    // Check if we already have an instance of PrismaClient
-    // @ts-ignore
-    if (!global.prisma) {
-      // @ts-ignore
-      global.prisma = new PrismaClient();
+    // Add to global in development to prevent multiple instances during hot reload
+    if (process.env.NODE_ENV !== 'production') {
+      global.prisma = prismaInstance
     }
-    
-    // @ts-ignore
-    prisma = global.prisma;
-    return prisma;
-  } catch (error) {
-    console.error('Failed to initialize Prisma client:', error);
-    // Return a mock Prisma client that logs errors
-    return createMockPrisma();
   }
+  
+  return prismaInstance
 }
 
-// Create a mock Prisma client that logs errors
-function createMockPrisma() {
-  return new Proxy({}, {
-    get: function(target, prop) {
-      if (typeof prop === 'string') {
-        return new Proxy({}, {
-          get: function() {
-            return () => {
-              console.error(`Prisma client not initialized. Method ${String(prop)} called.`);
-              return Promise.reject(new Error('Prisma client not initialized'));
-            };
-          }
-        });
-      }
-      return undefined;
-    }
-  });
-}
-
-// Initialize singleton
-const prismaPromise = initPrisma();
-
-// Export the promise that resolves to the Prisma client
-export { prismaPromise as prisma }; 
+// Export a function that returns the Prisma client
+export const prisma = getPrismaClient() 
