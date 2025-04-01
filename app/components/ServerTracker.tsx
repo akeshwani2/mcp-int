@@ -8,16 +8,13 @@ interface AgentState {
   mcp_config: Record<string, any>
 }
 
-interface MCPServerFromDB {
+interface MCPServer {
   id: string
   name: string
   transport: string
   command: string | null
   args: string | null
   url: string | null
-  sessionId: string
-  createdAt: string
-  updatedAt: string
   lastUsed: string | null
 }
 
@@ -32,44 +29,59 @@ export function ServerTracker({ onConfigClick }: ServerTrackerProps) {
   })
 
   useEffect(() => {
-    const fetchServers = async () => {
+    const loadServersFromLocalStorage = () => {
       try {
-        const response = await fetch('/api/servers')
-        if (!response.ok) {
-          throw new Error('Failed to fetch servers')
-        }
-        
-        const servers: MCPServerFromDB[] = await response.json()
+        // Get servers from localStorage
+        const serversJson = localStorage.getItem('mcp_servers') || '[]'
+        const servers: MCPServer[] = JSON.parse(serversJson)
         setServerCount(servers.length)
         
         // Update the agent state with the server data
         if (agentState) {
-          const configsFromDB: Record<string, any> = {}
+          const configs: Record<string, any> = {}
           
           servers.forEach(server => {
             if (server.transport === 'stdio') {
-              configsFromDB[server.name] = {
+              configs[server.name] = {
                 command: server.command || '',
                 args: server.args ? JSON.parse(server.args) : [],
                 transport: 'stdio'
               }
             } else if (server.transport === 'sse') {
-              configsFromDB[server.name] = {
+              configs[server.name] = {
                 url: server.url || '',
                 transport: 'sse'
               }
             }
           })
           
-          setAgentState({ ...agentState, mcp_config: configsFromDB })
+          // Only update if configurations are different
+          if (JSON.stringify(agentState.mcp_config) !== JSON.stringify(configs)) {
+            setAgentState(prevState => ({
+              ...prevState,
+              mcp_config: configs
+            }))
+          }
         }
       } catch (error) {
-        console.error('Error fetching servers:', error)
+        console.error('Error loading servers from localStorage:', error)
+        // Initialize with empty array if there's an error
+        localStorage.setItem('mcp_servers', '[]')
       }
     }
     
-    fetchServers()
-  }, [])
+    loadServersFromLocalStorage()
+    
+    // Add event listener for storage changes
+    window.addEventListener('storage', loadServersFromLocalStorage)
+    // Add custom event listener for our own storage changes
+    window.addEventListener('mcp_servers_updated', loadServersFromLocalStorage)
+    
+    return () => {
+      window.removeEventListener('storage', loadServersFromLocalStorage)
+      window.removeEventListener('mcp_servers_updated', loadServersFromLocalStorage)
+    }
+  }, []) // Remove dependencies to prevent infinite updates
 
   return (
     <button 

@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import Link from 'next/link'
+import { v4 as uuidv4 } from 'uuid'
 // import { MarketplacePopup } from '../components/MarketplacePopup'
 
 type ConnectionType = 'stdio' | 'sse'
@@ -36,17 +37,14 @@ interface AgentState {
   mcp_config: Record<string, ServerConfig>
 }
 
-// Server returned from API
-interface MCPServerFromDB {
+// Server for localStorage
+interface MCPServer {
   id: string
   name: string
   transport: string
   command: string | null
   args: string | null
   url: string | null
-  sessionId: string
-  createdAt: string
-  updatedAt: string
   lastUsed: string | null
 }
 
@@ -79,155 +77,163 @@ export function MCPConfigForm() {
   ).length
   const sseServers = Object.values(configs).filter((config) => config.transport === 'sse').length
 
-  // Fetch servers from API
+  // Load servers from localStorage
   useEffect(() => {
-    const fetchServers = async () => {
+    const loadServersFromLocalStorage = () => {
       try {
-        const response = await fetch('/api/servers')
-        if (!response.ok) {
-          throw new Error('Failed to fetch servers')
-        }
+        // Get servers from localStorage
+        const serversJson = localStorage.getItem('mcp_servers') || '[]'
+        const servers: MCPServer[] = JSON.parse(serversJson)
         
-        const serverData: MCPServerFromDB[] = await response.json()
+        // Convert to ServerConfig format
+        const configsFromStorage: Record<string, ServerConfig> = {}
         
-        // Convert the API response to our ServerConfig format
-        const configsFromDB: Record<string, ServerConfig> = {}
-        
-        serverData.forEach(server => {
+        servers.forEach(server => {
           if (server.transport === 'stdio') {
-            configsFromDB[server.name] = {
+            configsFromStorage[server.name] = {
               command: server.command || '',
               args: server.args ? JSON.parse(server.args) : [],
               transport: 'stdio' as const
             }
           } else if (server.transport === 'sse') {
-            configsFromDB[server.name] = {
+            configsFromStorage[server.name] = {
               url: server.url || '',
               transport: 'sse' as const
             }
           }
         })
         
-        setConfigs(configsFromDB)
-        setAgentState({ ...agentState, mcp_config: configsFromDB })
+        setConfigs(configsFromStorage)
+        
+        // Only update agent state if it's different to prevent infinite loops
+        if (agentState && JSON.stringify(agentState.mcp_config) !== JSON.stringify(configsFromStorage)) {
+          setAgentState(prevState => ({
+            ...prevState,
+            mcp_config: configsFromStorage
+          }))
+        }
+        
         setIsLoading(false)
       } catch (error) {
-        console.error('Error fetching servers:', error)
+        console.error('Error loading servers from localStorage:', error)
+        // Initialize with empty array if there's an error
+        localStorage.setItem('mcp_servers', '[]')
         setIsLoading(false)
       }
     }
     
-    fetchServers()
-  }, [])
+    loadServersFromLocalStorage()
+    
+    // Listen for storage changes
+    window.addEventListener('storage', loadServersFromLocalStorage)
+    window.addEventListener('mcp_servers_updated', loadServersFromLocalStorage)
+    
+    return () => {
+      window.removeEventListener('storage', loadServersFromLocalStorage)
+      window.removeEventListener('mcp_servers_updated', loadServersFromLocalStorage)
+    }
+  }, []) // Remove dependencies to prevent infinite updates
 
-  const addConfig = async () => {
+  const addConfig = () => {
     if (!serverName) return
 
-    // Create new server config data
-    const serverData = {
+    // Get current servers
+    const serversJson = localStorage.getItem('mcp_servers') || '[]'
+    const servers: MCPServer[] = JSON.parse(serversJson)
+    
+    // Check if server with this name already exists
+    if (servers.some(server => server.name === serverName)) {
+      alert('A server with this name already exists. Please choose a different name.')
+      return
+    }
+
+    // Create new server config
+    const newConfig: ServerConfig =
+      connectionType === 'stdio'
+        ? {
+            command,
+            args: args.split(' ').filter((arg) => arg.trim() !== ''),
+            transport: 'stdio' as const,
+          }
+        : {
+            url,
+            transport: 'sse' as const,
+          }
+
+    // Create new server for localStorage
+    const newServer: MCPServer = {
+      id: uuidv4(),
       name: serverName,
       transport: connectionType,
-      ...(connectionType === 'stdio' ? { 
-        command,
-        args: args.split(' ').filter(arg => arg.trim() !== '')
-      } : { 
-        url 
-      })
+      command: connectionType === 'stdio' ? command : null,
+      args: connectionType === 'stdio' ? JSON.stringify(args.split(' ').filter(arg => arg.trim() !== '')) : null,
+      url: connectionType === 'sse' ? url : null,
+      lastUsed: new Date().toISOString()
     }
+    
+    // Add to localStorage
+    servers.push(newServer)
+    localStorage.setItem('mcp_servers', JSON.stringify(servers))
+    
+    // Dispatch custom event for updating other components
+    window.dispatchEvent(new Event('mcp_servers_updated'))
 
-    try {
-      // Save server to database via API
-      const response = await fetch('/api/servers', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(serverData),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to create server')
-      }
-
-      // Get the server config
-      const newConfig =
-        connectionType === 'stdio'
-          ? {
-              command,
-              args: args.split(' ').filter((arg) => arg.trim() !== ''),
-              transport: 'stdio' as const,
-            }
-          : {
-              url,
-              transport: 'sse' as const,
-            }
-
-      // Update local state
-      const updatedConfigs = {
-        ...configs,
-        [serverName]: newConfig,
-      }
-      
-      setConfigs(updatedConfigs)
-      setAgentState({ ...agentState, mcp_config: updatedConfigs })
-
-      // Reset form
-      setServerName('')
-      setCommand('')
-      setArgs('')
-      setUrl('')
-      setShowAddServerForm(false)
-    } catch (error) {
-      console.error('Error creating server:', error)
-      alert('Failed to create server. Please try again.')
+    // Update local state
+    const updatedConfigs = {
+      ...configs,
+      [serverName]: newConfig,
     }
+    
+    setConfigs(updatedConfigs)
+    
+    // Update agent state safely using the function form
+    setAgentState(prevState => ({
+      ...prevState,
+      mcp_config: updatedConfigs
+    }))
+
+    // Reset form
+    setServerName('')
+    setCommand('')
+    setArgs('')
+    setUrl('')
+    setShowAddServerForm(false)
   }
 
-  const removeConfig = async (name: string) => {
+  const removeConfig = (name: string) => {
     try {
-      // Find the server id by name
-      const serverToDelete = Object.entries(configs).find(([serverName]) => serverName === name);
-      if (!serverToDelete) {
-        throw new Error('Server not found');
-      }
+      // Get current servers
+      const serversJson = localStorage.getItem('mcp_servers') || '[]'
+      const servers: MCPServer[] = JSON.parse(serversJson)
       
-      // Get the server config and find its id in our database
-      // For now, we need to fetch all servers to find the id by name
-      const response = await fetch('/api/servers');
-      if (!response.ok) {
-        throw new Error('Failed to fetch servers');
-      }
+      // Filter out the server to remove
+      const updatedServers = servers.filter(server => server.name !== name)
       
-      const servers: MCPServerFromDB[] = await response.json();
-      const serverFromDB = servers.find(server => server.name === name);
+      // Save back to localStorage
+      localStorage.setItem('mcp_servers', JSON.stringify(updatedServers))
       
-      if (!serverFromDB) {
-        throw new Error('Server not found in database');
-      }
-      
-      // Delete server from database
-      const deleteResponse = await fetch(`/api/servers/${serverFromDB.id}`, {
-        method: 'DELETE',
-      });
-      
-      if (!deleteResponse.ok) {
-        throw new Error('Failed to delete server');
-      }
+      // Dispatch custom event for updating other components
+      window.dispatchEvent(new Event('mcp_servers_updated'))
       
       // Update local state
-      const newConfigs = { ...configs };
-      delete newConfigs[name];
+      const newConfigs = { ...configs }
+      delete newConfigs[name]
       
-      setConfigs(newConfigs);
-      setAgentState({ ...agentState, mcp_config: newConfigs });
+      setConfigs(newConfigs)
+      
+      // Update agent state safely using the function form
+      setAgentState(prevState => ({
+        ...prevState,
+        mcp_config: newConfigs
+      }))
     } catch (error) {
-      console.error('Error removing server:', error);
-      alert('Failed to remove server. Please try again.');
+      console.error('Error removing server:', error)
+      alert('Failed to remove server. Please try again.')
     }
   }
 
   if (isLoading) {
-    return <div className="p-4 animate-pulse text-gray-500">Fetching your servers...</div>
+    return <div className="p-4 animate-pulse text-gray-500">Loading your servers...</div>
   }
 
   return (
