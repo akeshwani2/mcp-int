@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install Rust
+# Install Rust and other build dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     curl \
@@ -13,13 +13,11 @@ RUN apt-get update && \
 
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-# Copy requirements first to leverage Docker cache
-COPY pyproject.toml poetry.lock* ./
+# Copy requirements
+COPY requirements.txt .
 
 # Install dependencies
-RUN pip install --no-cache-dir poetry && \
-    poetry config virtualenvs.create false && \
-    poetry install --no-interaction --no-ansi
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application
 COPY . .
@@ -31,4 +29,4 @@ ENV PYTHONUNBUFFERED=1
 EXPOSE 8000
 
 # Run the server
-CMD ["poetry", "run", "langgraph", "serve", "-p", "8000", "--host", "0.0.0.0"] 
+CMD ["python", "-m", "langgraph", "serve", "-p", "8000", "--host", "0.0.0.0"] 
