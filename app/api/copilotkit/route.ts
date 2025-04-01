@@ -33,3 +33,8 @@ export const POST = async (req: NextRequest) => {
 
     return handleRequest(req);
 };
+
+// Configure for Edge runtime to avoid timeouts in Vercel
+export const config = {
+    runtime: 'edge'
+};
