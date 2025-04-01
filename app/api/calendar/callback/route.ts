@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/api/gmail/callback'
+  process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/api/calendar/callback'
 );
 
 export async function GET(request: NextRequest) {
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   // Handle error case
   if (error) {
     console.error('Auth error:', error);
-    return NextResponse.redirect(new URL('/?error=auth_rejected', request.url));
+    return NextResponse.redirect(new URL('/?error=calendar_auth_rejected', request.url));
   }
   
   // If no code, redirect back to home with error
@@ -28,11 +28,11 @@ export async function GET(request: NextRequest) {
     // Exchange code for tokens
     const { tokens } = await oauth2Client.getToken(code);
     
-    // Store tokens in cookies that are accessible to client-side code
+    // Store tokens in cookies, but make them accessible to client-side code
     const cookieStore = await cookies();
     
-    // Set token cookie (NOT httpOnly to allow JavaScript access)
-    cookieStore.set('gmail_tokens', JSON.stringify(tokens), {
+    // Set calendar tokens
+    cookieStore.set('calendar_tokens', JSON.stringify(tokens), {
       httpOnly: false, // Allow JavaScript access
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 365, // 1 year
@@ -40,20 +40,8 @@ export async function GET(request: NextRequest) {
       sameSite: 'lax',
     });
     
-    // Set a cookie that indicates auth status for the client
-    cookieStore.set('gmail_connected', 'true', {
-      httpOnly: false, // Accessible via JavaScript
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 365, // 1 year
-      path: '/',
-      sameSite: 'lax',
-    });
-    
-    // Check if tokens include calendar access
-    const hasCalendarAccess = tokens.scope?.includes('https://www.googleapis.com/auth/calendar.readonly');
-    
-    // Set a cookie for checking if calendar access is available
-    cookieStore.set('calendar_access', hasCalendarAccess ? 'true' : 'false', { 
+    // Also set a flag cookie 
+    cookieStore.set('calendar_connected', 'true', {
       httpOnly: false, // Accessible via JavaScript
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 365, // 1 year
@@ -62,7 +50,8 @@ export async function GET(request: NextRequest) {
     });
     
     // Redirect to home page with success status
-    return NextResponse.redirect(new URL('/?success=gmail_connected', request.url));
+    const successUrl = new URL('/?success=calendar_connected', request.url);
+    return NextResponse.redirect(successUrl);
   } catch (error) {
     console.error('Token exchange error:', error);
     return NextResponse.redirect(new URL('/?error=token_exchange', request.url));
