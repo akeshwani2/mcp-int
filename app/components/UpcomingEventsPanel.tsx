@@ -3,6 +3,41 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, Users, ExternalLink, RefreshCw } from 'lucide-react';
 
+// Google Calendar API response interfaces
+interface GoogleCalendarAttendee {
+  email?: string;
+  displayName?: string;
+}
+
+interface GoogleCalendarEventTime {
+  date?: string;
+  dateTime?: string;
+  timeZone?: string;
+}
+
+interface GoogleCalendarEntryPoint {
+  entryPointType: string;
+  uri: string;
+  label?: string;
+}
+
+interface GoogleCalendarConferenceData {
+  conferenceUrl?: string;
+  entryPoints?: GoogleCalendarEntryPoint[];
+}
+
+interface GoogleCalendarEvent {
+  id?: string;
+  summary?: string;
+  start?: GoogleCalendarEventTime;
+  end?: GoogleCalendarEventTime;
+  location?: string;
+  description?: string;
+  attendees?: GoogleCalendarAttendee[];
+  htmlLink?: string;
+  conferenceData?: GoogleCalendarConferenceData;
+}
+
 interface CalendarEvent {
   id: string;
   title: string;
@@ -67,7 +102,7 @@ const UpcomingEventsPanel = ({ onAddEventClick, onConnectAccount }: UpcomingEven
     if (event.conferenceData) {
       // If there are video entry points, use the first one
       const videoEntryPoint = event.conferenceData.entryPoints?.find(
-        (e: any) => e.entryPointType === 'video'
+        (entryPoint: {entryPointType: string; uri: string; label?: string}) => entryPoint.entryPointType === 'video'
       );
       
       if (videoEntryPoint?.uri) {
@@ -132,8 +167,8 @@ const UpcomingEventsPanel = ({ onAddEventClick, onConnectAccount }: UpcomingEven
       if (data.events && Array.isArray(data.events)) {
         // Convert API response to our CalendarEvent format
         const formattedEvents = data.events
-          .filter((event: any) => event && Object.keys(event).length > 0)
-          .map((event: any) => {
+          .filter((event: GoogleCalendarEvent) => event && Object.keys(event).length > 0)
+          .map((event: GoogleCalendarEvent) => {
             // Handle different date formats from Google Calendar API
             let startTime, endTime;
             
@@ -153,7 +188,7 @@ const UpcomingEventsPanel = ({ onAddEventClick, onConnectAccount }: UpcomingEven
               } else {
                 endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
               }
-            } catch (e) {
+            } catch (_) {
               return null;
             }
             
@@ -164,12 +199,12 @@ const UpcomingEventsPanel = ({ onAddEventClick, onConnectAccount }: UpcomingEven
               end_time: endTime,
               location: event.location || '',
               description: event.description || '',
-              attendees: event.attendees?.map((a: any) => a.email || a.displayName) || [],
+              attendees: event.attendees?.map((attendee: GoogleCalendarAttendee) => attendee.email || attendee.displayName) || [],
               htmlLink: event.htmlLink || '',
               conferenceData: event.conferenceData || undefined
             };
           })
-          .filter((event: any) => event !== null);
+          .filter((event: CalendarEvent | null) => event !== null);
         
         // Sort events by start time
         const sortedEvents = formattedEvents.sort((a: CalendarEvent, b: CalendarEvent) => 

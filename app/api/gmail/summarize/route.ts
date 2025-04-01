@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Define email interface to replace any type
+interface EmailData {
+  subject: string;
+  from?: string;
+  snippet?: string;
+  body?: string;
+}
+
 // Initialize Gemini API client
 // We'll use fetch directly for the Gemini API
 
 // Function to get a simple summary based on rules
-const getSimpleSummary = (email: any): string => {
+const getSimpleSummary = (email: EmailData): string => {
   if (!email || !email.subject) return 'No subject';
   
   const subject = email.subject.toLowerCase();

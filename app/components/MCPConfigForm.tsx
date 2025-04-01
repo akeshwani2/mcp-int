@@ -14,7 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import Link from 'next/link'
-import { MarketplacePopup } from '../components/MarketplacePopup'
+// import { MarketplacePopup } from '../components/MarketplacePopup'
 
 type ConnectionType = 'stdio' | 'sse'
 
@@ -448,7 +448,7 @@ export function MCPConfigForm() {
       )}
 
       {/* Marketplace popup */}
-      <MarketplacePopup isOpen={showMarketplace} onClose={() => setShowMarketplace(false)} />
+      {/* <MarketplacePopup isOpen={showMarketplace} onClose={() => setShowMarketplace(false)} /> */}
     </div>
   )
 }

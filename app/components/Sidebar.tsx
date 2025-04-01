@@ -60,7 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = () => {
         </button>
       </Link> */}
       
-      <Link href="/marketplace">
+      {/* <Link href="/marketplace">
         <button
           className={`p-2 cursor-pointer hover:scale-105 hover:text-white hover:bg-white/10 rounded-full mb-4 transition-all duration-300 ${
             pathname === "/marketplace" ? "text-white bg-red-500" : "text-white/70"
@@ -69,7 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = () => {
         >
           <Store size={20} />
         </button>
-      </Link>
+      </Link> */}
     </div>
   );
 };

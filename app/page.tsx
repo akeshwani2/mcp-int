@@ -5,12 +5,11 @@ import { MCPConfigForm } from "./components/MCPConfigForm";
 import { Sidebar } from "./components/Sidebar";
 import { ServerTracker } from "./components/ServerTracker";
 import { useState, useEffect } from "react";
-import { ArrowUp, X } from "lucide-react";
+import { X } from "lucide-react";
 import { CustomChatUI } from "./components/CustomChatUI";
 
 export default function Home() {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState("home");
   const [gmailTokens, setGmailTokens] = useState<string | null>(null);
   const [assistantPreferences, setAssistantPreferences] = useState({
     emailEnabled: false,
@@ -89,14 +88,6 @@ export default function Home() {
     localStorage.setItem('assistantPreferences', JSON.stringify(assistantPreferences));
   }, [assistantPreferences]);
 
-  const handleNavigation = (page: string) => {
-    if (page === "home") {
-      setCurrentPage("home");
-    } else if (page === "docs") {
-      setCurrentPage("docs");
-    }
-  };
-
   return (
     <div className="h-screen overflow-hidden bg-black text-white flex relative">
       <CopilotActionHandler />
@@ -108,39 +99,6 @@ export default function Home() {
       <div className="flex-1 p-4 md:p-8 flex flex-col overflow-hidden">
         {/* Server tracker and Gmail status indicator */}
         <div className="absolute top-4 right-4 z-10 flex items-center space-x-2">
-          {/* <div className="flex items-center">
-            {gmailTokens ? (
-              <div className="flex items-center bg-zinc-900 rounded-full px-2 py-0.5 border border-zinc-800">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1.5"></span>
-                <span className="text-xs text-zinc-400 mr-2">Gmail</span>
-                <button 
-                  onClick={() => {
-                    // Clear any existing tokens
-                    document.cookie = "gmail_tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                    document.cookie = "gmail_connected=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                    // Reload page
-                    window.location.href = '/api/gmail/auth?force_refresh=true';
-                  }}
-                  className="text-xs text-blue-400 hover:text-blue-300"
-                >
-                  Reconnect
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center bg-zinc-900 rounded-full px-2 py-0.5 border border-zinc-800">
-                <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-1.5"></span>
-                <span className="text-xs text-zinc-400 mr-2">Gmail</span>
-                <button 
-                  onClick={() => {
-                    window.location.href = '/api/gmail/auth';
-                  }}
-                  className="text-xs text-blue-400 hover:text-blue-300"
-                >
-                  Connect
-                </button>
-              </div>
-            )}
-          </div> */}
           <ServerTracker onConfigClick={() => setIsConfigOpen(true)} />
         </div>
         

@@ -1,5 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Define types for Gmail API responses
+interface GmailMessage {
+  id: string;
+  threadId?: string;
+}
+
+interface GmailHeader {
+  name: string;
+  value: string;
+}
+
+interface GmailBodyPart {
+  mimeType: string;
+  filename?: string;
+  headers?: GmailHeader[];
+  body?: {
+    data?: string;
+    size?: number;
+  };
+  parts?: GmailBodyPart[];
+}
+
+interface GmailMessageDetails {
+  id: string;
+  threadId: string;
+  labelIds?: string[];
+  snippet?: string;
+  payload: {
+    headers: GmailHeader[];
+    body?: {
+      data?: string;
+      size?: number;
+    };
+    parts?: GmailBodyPart[];
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { tokens, query, dateRange } = await request.json();
@@ -51,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Fetch details for each message
-    const emailPromises = listData.messages.slice(0, 10).map(async (message: any) => {
+    const emailPromises = listData.messages.slice(0, 10).map(async (message: GmailMessage) => {
       const messageResponse = await fetch(
         `https://www.googleapis.com/gmail/v1/users/me/messages/${message.id}?format=full`,
         {
@@ -66,20 +103,20 @@ export async function POST(request: NextRequest) {
         return null;
       }
       
-      const messageData = await messageResponse.json();
+      const messageData = await messageResponse.json() as GmailMessageDetails;
       
       // Extract email details
       const headers = messageData.payload.headers;
-      const from = headers.find((h: any) => h.name === 'From')?.value || '';
-      const to = headers.find((h: any) => h.name === 'To')?.value || '';
-      const subject = headers.find((h: any) => h.name === 'Subject')?.value || '';
-      const date = headers.find((h: any) => h.name === 'Date')?.value || '';
+      const from = headers.find((h: GmailHeader) => h.name === 'From')?.value || '';
+      const to = headers.find((h: GmailHeader) => h.name === 'To')?.value || '';
+      const subject = headers.find((h: GmailHeader) => h.name === 'Subject')?.value || '';
+      const date = headers.find((h: GmailHeader) => h.name === 'Date')?.value || '';
       
       // Extract email body
       let body = '';
       let html = '';
       
-      const extractBodyParts = (part: any) => {
+      const extractBodyParts = (part: GmailBodyPart) => {
         if (part.body && part.body.data) {
           const content = Buffer.from(part.body.data, 'base64').toString('utf-8');
           if (part.mimeType === 'text/plain') {
@@ -103,7 +140,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Check for attachments
-      const hasAttachments = messageData.payload.parts?.some((part: any) => 
+      const hasAttachments = messageData.payload.parts?.some((part: GmailBodyPart) => 
         part.filename && part.filename.length > 0
       ) || false;
       

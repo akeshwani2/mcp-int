@@ -51,7 +51,28 @@ export async function POST(request: Request) {
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
     // Structure the event properly
-    const event = {
+    const event: {
+      summary: string;
+      location?: string;
+      description?: string;
+      start: {
+        dateTime: string;
+        timeZone?: string;
+      };
+      end: {
+        dateTime: string;
+        timeZone?: string;
+      };
+      reminders: { useDefault: boolean };
+      conferenceData?: {
+        createRequest?: {
+          conferenceSolutionKey?: {
+            type: string;
+          };
+          requestId?: string;
+        };
+      };
+    } = {
       summary: eventData.summary,
       location: eventData.location,
       description: eventData.description,
@@ -68,7 +89,11 @@ export async function POST(request: Request) {
                              eventData.conferenceData.createRequest.conferenceSolutionKey;
     
     // Create the event
-    const insertParams: any = {
+    const insertParams: {
+      calendarId: string;
+      requestBody: typeof event;
+      conferenceDataVersion?: number;
+    } = {
       calendarId: 'primary',
       requestBody: event
     };
@@ -76,7 +101,6 @@ export async function POST(request: Request) {
     // If using Google Meet, we need to add the conferenceDataVersion parameter
     if (hasConferenceData) {
       insertParams.conferenceDataVersion = 1;
-      // @ts-ignore
       event.conferenceData = eventData.conferenceData;
       
       // Log for debugging
