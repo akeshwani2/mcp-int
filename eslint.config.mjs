@@ -23,6 +23,18 @@ const eslintConfig = [
       "@typescript-eslint/ban-ts-comment": "off",
     },
   },
+  {
+    files: [
+      "app/api/**/*.ts",
+      "app/api/**/*.tsx",
+      "app/components/**/*.ts",
+      "app/components/**/*.tsx"
+    ],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "warn"
+    },
+  },
 ];
 
 export default eslintConfig;

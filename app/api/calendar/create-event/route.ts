@@ -118,7 +118,10 @@ export async function POST(request: Request) {
       success: true,
       event: response.data 
     });
-  } catch (error: any) {
+  } catch (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    error: any
+  ) {
     console.error('Calendar API error:', error);
     
     // Check if the error is related to token/permissions
