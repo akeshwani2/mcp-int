@@ -55,7 +55,7 @@ export default function OAuthRequiredModal({
           </div>
           <div>
             <h2 className="text-xl font-medium">Connect Your Google Account</h2>
-            <p className="text-zinc-400 text-sm">Enhance Echo's capabilities</p>
+            <p className="text-zinc-400 text-sm">Enhance Echo&apos;s capabilities</p>
           </div>
         </div>
         

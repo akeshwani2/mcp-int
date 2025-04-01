@@ -15,6 +15,8 @@ interface Task {
   created_at: string;
 }
 
+// Component doesn't need props but we're keeping the interface for future extensibility
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface TasksWidgetProps {
   // Props can be added as needed
 }

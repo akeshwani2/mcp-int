@@ -1,10 +1,12 @@
 "use client";
 
 import React from "react";
-import { MessageCircle, Store, File, Mail, Calendar, CheckSquare } from "lucide-react";
+import { MessageCircle, Mail, Calendar } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+// Component doesn't need props but we're keeping the FC type for consistency
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface SidebarProps {}
 
 export const Sidebar: React.FC<SidebarProps> = () => {

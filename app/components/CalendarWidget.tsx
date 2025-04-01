@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, Users, ExternalLink, ChevronLeft, ChevronRight, Plus, RefreshCw } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, ExternalLink, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 
 interface CalendarEvent {
   id: string;

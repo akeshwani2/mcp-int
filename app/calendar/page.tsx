@@ -20,9 +20,9 @@ const CalendarPage = () => {
   };
 
   // Function that other components can call to open the auth modal
-  const openAuthModal = () => {
-    setAuthModalOpen(true);
-  };
+  // const openAuthModal = () => {
+  //   setAuthModalOpen(true);
+  // };
 
   // Pass this function to child components
   const handleConnectAccount = () => {
